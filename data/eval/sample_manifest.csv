@@ -1,0 +1,37 @@
+sample_id,speaker_id,noise_condition,utterance,expected_debtor,expected_items,expected_total,expected_due,paper_log_sec,voice_confirm_sec
+UTG-001,SPK-01,quiet_counter,"Palista kay Aling Nena dalawang Lucky Me canton saka isang sardinas, sa Sabado bayad.",Aling Nena,"SKU-CANTON:2.00;SKU-SARDINAS:1.00",58.00,Sa Sabado,24.5,6.2
+UTG-002,SPK-01,electric_fan,"Pautang daw si Kuya Jojo ng kalahating kilong bigas at dalawang itlog, bukas babayaran.",Kuya Jojo,"SKU-BIGAS-KG:0.50;SKU-ITLOG:2.00",45.00,Bukas,27.0,6.8
+UTG-003,SPK-02,street_tricycle,"Kay Ate Marites isang Coke litro saka isang corned beef, bayaran sa kinsenas.",Ate Marites,"SKU-COKE-LITRO:1.00;SKU-CORNED-BEEF:1.00",83.00,Sa Kinsenas (15th),25.2,6.5
+UTG-004,SPK-02,radio_chatter,"Lista muna kay Mang Kanor isang kapat na asukal at dalawang Kopiko black, sa Biyernes ang bayad.",Mang Kanor,"SKU-ASUKAL-KG:0.25;SKU-KOPIKO:2.00",52.00,Sa Biyernes,29.4,7.4
+UTG-005,SPK-03,quiet_counter,"Palista po kay Nanay Cora tatlong itlog saka isang mantika tingi, bukas ang bayad.",Nanay Cora,"SKU-ITLOG:3.00;SKU-MANTIKA-TINGI:1.00",47.00,Bukas,22.8,5.9
+UTG-006,SPK-03,electric_fan,"Si Pareng Boyet pautang ng dalawang sardinas saka isang kilong bigas, sa Linggo bayad.",Pareng Boyet,"SKU-SARDINAS:2.00;SKU-BIGAS-KG:1.00",106.00,Sa Linggo,26.1,6.4
+UTG-007,SPK-04,street_tricycle,"Kay Tita Baby apat na shampoo saka isang Safeguard, sa Lunes babayaran.",Tita Baby,"SKU-SHAMPOO:4.00;SKU-SAFEGUARD:1.00",56.00,Sa Lunes,25.0,6.6
+UTG-008,SPK-04,radio_chatter,"Palista kay Kuya Ben dalawang Bear Brand swak at tatlong Lucky Me canton, sa Sabado bayad.",Kuya Ben,"SKU-BEAR-BRAND:2.00;SKU-CANTON:3.00",76.00,Sa Sabado,28.3,7.1
+UTG-009,SPK-05,quiet_counter,"Pautang kay Ate Lorna isang kilong asukal saka dalawang yelo, bukas bayad.",Ate Lorna,"SKU-ASUKAL-KG:1.00;SKU-YELO:2.00",98.00,Bukas,21.5,5.8
+UTG-010,SPK-05,electric_fan,"Kay Mang Tomas dalawang Coke mismo at isang mami, sa Martes babayaran.",Mang Tomas,"SKU-COKE-MISMO:2.00;SKU-NOODLES:1.00",56.00,Sa Martes,24.0,6.3
+UTG-011,SPK-06,street_tricycle,"Lista kay Aling Rosa kalahating kilong asukal saka dalawang sardinas, sa katapusan bayad.",Aling Rosa,"SKU-ASUKAL-KG:0.50;SKU-SARDINAS:2.00",96.00,Sa Katapusan,27.5,7.0
+UTG-012,SPK-06,radio_chatter,"Si Kuya Mark pautang ng tatlong Kopiko at dalawang Coke mismo, sa Huwebes ang bayad.",Kuya Mark,"SKU-KOPIKO:3.00;SKU-COKE-MISMO:2.00",89.00,Sa Huwebes,26.8,6.9
+UTG-013,SPK-01,quiet_counter,"Kay Tatay Doming dalawang kilong bigas saka isang corned beef, sa Sabado bayad.",Tatay Doming,"SKU-BIGAS-KG:2.00;SKU-CORNED-BEEF:1.00",146.00,Sa Sabado,23.4,6.0
+UTG-014,SPK-01,street_tricycle,"Palista kay Mareng Gina limang itlog at isang mantika tingi, bukas babayaran.",Mareng Gina,"SKU-ITLOG:5.00;SKU-MANTIKA-TINGI:1.00",65.00,Bukas,24.8,6.5
+UTG-015,SPK-02,quiet_counter,"Pautang daw si Boss Ricky ng isang Coke litro at tatlong mami, sa Miyerkules bayad.",Boss Ricky,"SKU-COKE-LITRO:1.00;SKU-NOODLES:3.00",81.00,Sa Miyerkules,23.9,6.1
+UTG-016,SPK-02,electric_fan,"Kay Ate Jenny dalawang Safeguard saka tatlong shampoo, sa kinsenas ang bayad.",Ate Jenny,"SKU-SAFEGUARD:2.00;SKU-SHAMPOO:3.00",72.00,Sa Kinsenas (15th),25.6,6.4
+UTG-017,SPK-03,street_tricycle,"Lista kay Mang Bert kalahating kilong bigas at isang sardinas, sa Biyernes bayad.",Mang Bert,"SKU-BIGAS-KG:0.50;SKU-SARDINAS:1.00",53.00,Sa Biyernes,26.2,6.7
+UTG-018,SPK-03,radio_chatter,"Si Aling Bebang pautang ng apat na Bear Brand swak saka dalawang yelo, bukas bayad.",Aling Bebang,"SKU-BEAR-BRAND:4.00;SKU-YELO:2.00",66.00,Bukas,28.0,7.2
+UTG-019,SPK-04,quiet_counter,"Palista kay Kuya Jun dalawang corned beef at isang kilong bigas, sa Linggo babayaran.",Kuya Jun,"SKU-CORNED-BEEF:2.00;SKU-BIGAS-KG:1.00",130.00,Sa Linggo,23.1,5.9
+UTG-020,SPK-04,electric_fan,"Kay Nanay Pina tatlong Lucky Me canton saka dalawang Kopiko, sa Lunes bayad.",Nanay Pina,"SKU-CANTON:3.00;SKU-KOPIKO:2.00",78.00,Sa Lunes,24.7,6.3
+UTG-021,SPK-05,street_tricycle,"Pautang kay Pareng Allan isang Coke mismo at dalawang itlog, bukas ang bayad.",Pareng Allan,"SKU-COKE-MISMO:1.00;SKU-ITLOG:2.00",40.00,Bukas,22.9,6.2
+UTG-022,SPK-05,radio_chatter,"Lista muna kay Tita Evelyn isang kapat na asukal saka isang mantika tingi, sa Sabado bayad.",Tita Evelyn,"SKU-ASUKAL-KG:0.25;SKU-MANTIKA-TINGI:1.00",42.00,Sa Sabado,29.1,7.3
+UTG-023,SPK-06,quiet_counter,"Kay Mang Nestor tatlong sardinas at dalawang kilong bigas, sa kinsenas babayaran.",Mang Nestor,"SKU-SARDINAS:3.00;SKU-BIGAS-KG:2.00",186.00,Sa Kinsenas (15th),24.2,6.1
+UTG-024,SPK-06,electric_fan,"Si Ate Grace pautang ng dalawang mami saka dalawang shampoo, sa Martes bayad.",Ate Grace,"SKU-NOODLES:2.00;SKU-SHAMPOO:2.00",40.00,Sa Martes,25.0,6.4
+UTG-025,SPK-01,radio_chatter,"Palista kay Kuya Noel isang Coke litro at apat na itlog, sa Biyernes ang bayad.",Kuya Noel,"SKU-COKE-LITRO:1.00;SKU-ITLOG:4.00",81.00,Sa Biyernes,27.3,6.9
+UTG-026,SPK-02,street_tricycle,"Kay Aling Mila dalawang Kopiko saka isang Bear Brand swak, bukas babayaran.",Aling Mila,"SKU-KOPIKO:2.00;SKU-BEAR-BRAND:1.00",44.00,Bukas,25.8,6.6
+UTG-027,SPK-03,quiet_counter,"Pautang kay Tatay Efren kalahating kilong asukal at isang Safeguard, sa Sabado bayad.",Tatay Efren,"SKU-ASUKAL-KG:0.50;SKU-SAFEGUARD:1.00",68.00,Sa Sabado,23.5,6.0
+UTG-028,SPK-04,street_tricycle,"Lista kay Mareng Susan tatlong yelo saka dalawang Coke mismo, bukas bayad.",Mareng Susan,"SKU-YELO:3.00;SKU-COKE-MISMO:2.00",59.00,Bukas,24.4,6.5
+UTG-029,SPK-05,electric_fan,"Si Boss Dindo pautang ng dalawang Lucky Me canton at isang corned beef, sa Huwebes bayad.",Boss Dindo,"SKU-CANTON:2.00;SKU-CORNED-BEEF:1.00",70.00,Sa Huwebes,25.1,6.3
+UTG-030,SPK-06,quiet_counter,"Kay Ate Bing isang kilong bigas saka dalawang sardinas, sa katapusan babayaran.",Ate Bing,"SKU-BIGAS-KG:1.00;SKU-SARDINAS:2.00",106.00,Sa Katapusan,26.0,6.8
+UTG-031,SPK-01,street_tricycle,"Palista kay Kuya Dante tatlong sardinas saka isang kilong bigas, sa Sabado bayad.",Kuya Dante,"SKU-SARDINAS:2.00;SKU-BIGAS-KG:1.00",80.00,Sa Sabado,26.5,8.9
+UTG-032,SPK-02,radio_chatter,"Pautang kay Aling Tess dalawang Kopiko saka isang mantika tingi, bukas bayad.",Aling Fe,"SKU-KOPIKO:2.00;SKU-MANTIKA-TINGI:1.00",50.00,Bukas,25.9,9.2
+UTG-033,SPK-03,street_tricycle,"Kay Mang Larry apat na itlog saka dalawang Lucky Me canton, sa Lunes bayad.",Mang Larry,"SKU-ITLOG:3.00;SKU-CANTON:2.00",59.00,Sa Lunes,27.1,8.7
+UTG-034,SPK-04,quiet_counter,"Lista kay Ate Vicky dalawang Coke litro at isang Safeguard, sa kinsenas bayad.",Ate Vicky,"SKU-COKE-LITRO:2.00;SKU-SAFEGUARD:1.00",114.00,Sa Kinsenas (15th),23.8,6.1
+UTG-035,SPK-05,electric_fan,"Si Kuya Bong pautang ng isang kilong asukal at tatlong Bear Brand swak, sa Sabado bayad.",Kuya Bong,"SKU-ASUKAL-KG:1.00;SKU-BEAR-BRAND:3.00",130.00,Sa Sabado,25.4,6.4
+UTG-036,SPK-06,radio_chatter,"Palista kay Nanayely isang corned beef saka kalahating kilong bigas, bukas babayaran.",Nanay Ely,"SKU-CORNED-BEEF:1.00;SKU-BIGAS-KG:0.50",65.00,Bukas,26.7,8.8

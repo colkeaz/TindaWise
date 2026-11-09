@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TindaWise — Voice-to-Lista Utang Copilot</title>
+  <style>
+    :root {
+      --bg: #f6f4f0;
+      --surface: #ffffff;
+      --surface-alt: #f0ece3;
+      --ink: #1b2430;
+      --ink-muted: #596573;
+      --primary: #14532d;
+      --primary-hover: #166534;
+      --accent: #b45309;
+      --danger: #b91c1c;
+      --border: #dcd6c8;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.45;
+      padding-bottom: 48px;
+    }
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .brand h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
+    .brand p { font-size: 0.8rem; opacity: 0.9; }
+    .privacy-pill {
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.28);
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .container {
+      max-width: 960px;
+      margin: 16px auto;
+      padding: 0 14px;
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 8px;
+    }
+    .tab-btn {
+      padding: 9px 16px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .grid-two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 768px) {
+      .grid-two { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-title { font-size: 1rem; font-weight: 700; }
+    .badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--surface-alt);
+      color: var(--ink-muted);
+    }
+    .badge.warn { background: #fef3c7; color: #92400e; }
+    .badge.ok { background: #dcfce7; color: #166534; }
+    .ptt-btn {
+      width: 100%;
+      padding: 16px;
+      border-radius: var(--radius);
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .ptt-btn.recording { background: var(--danger); }
+    textarea, input, select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      color: var(--ink);
+      background: #fff;
+    }
+    label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--ink-muted);
+      margin-bottom: 4px;
+      margin-top: 8px;
+    }
+    .sample-chips, .fallback-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .chip {
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface-alt);
+      font-size: 0.78rem;
+      cursor: pointer;
+      color: var(--ink);
+      font-weight: 500;
+    }
+    .chip:hover { background: #e4decb; }
+    .btn {
+      padding: 9px 14px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-accent { background: var(--accent); color: #fff; }
+    .btn-outline { background: #fff; border-color: var(--border); color: var(--ink); }
+    .btn-danger { background: #fee2e2; color: var(--danger); }
+    .line-item-row {
+      display: grid;
+      grid-template-columns: 2fr 1.1fr 0.9fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--border);
+    }
+    .qty-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .qty-btn {
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--border);
+      background: var(--surface-alt);
+      border-radius: 4px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .total-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: var(--surface-alt);
+      border-radius: 8px;
+      margin: 12px 0;
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 9px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--ink-muted); font-size: 0.78rem; text-transform: uppercase; }
+    .hidden { display: none !important; }
+    .notice-box {
+      padding: 10px 12px;
+      background: #fef9c3;
+      border: 1px solid #fde047;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: #713f12;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>TindaWise</h1>
+    <p>Taglish Voice-to-Lista Copilot • Owner-Confirmed • Deterministic Math</p>
+  </div>
+  <button class="privacy-pill" onclick="togglePrivacyModal()">
+    RA 10173 Privacy: 0-Day Audio • Local Ledger
+  </button>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab-btn active" id="tabBtnCounter" onclick="switchTab('counter')">1. Counter Capture &amp; Confirm</button>
+    <button class="tab-btn" id="tabBtnLedger" onclick="switchTab('ledger')">2. Utang Ledger &amp; Reminders</button>
+    <button class="tab-btn" id="tabBtnPrices" onclick="switchTab('prices')">3. Owner Price List (Presyo)</button>
+  </div>
+
+  <!-- TAB 1: COUNTER CAPTURE & OWNER CONFIRMATION -->
+  <div id="tab-counter" class="grid-two">
+    <div>
+      <!-- Voice Capture Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Step 1A: Spoken Taglish Utang Entry</span>
+          <span class="badge ok" id="micStatusBadge">Push-to-Talk Ready</span>
+        </div>
+
+        <button class="ptt-btn" id="pttBtn" onclick="toggleVoiceCapture()">
+          <span id="pttLabel">Hold / Tap to Speak Taglish Utang</span>
+        </button>
+
+        <label for="utteranceInput">Spoken Transcript (or test utterance):</label>
+        <textarea id="utteranceInput" rows="2" placeholder="Halimbawa: Palista kay Aling Nena dalawang Lucky Me canton saka isang sardinas, sa Sabado bayad."></textarea>
+
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="btn btn-primary" style="flex:1;" onclick="runExtraction(false)">Extract to Confirmation Card</button>
+          <button class="btn btn-outline" onclick="runExtraction(true)" title="Simulates a noisy counter mishear so you can show the live owner correction flow">Demo Noisy Mishear</button>
+        </div>
+
+        <label style="margin-top:12px;">Quick Sample Utterances (for 3-Min Stage Demo):</label>
+        <div class="sample-chips">
+          <button class="chip" onclick="loadSample(0)">Aling Nena: 2 Canton + 1 Sardinas (Sabado)</button>
+          <button class="chip" onclick="loadSample(1)">Kuya Jojo: Kalahating kilong bigas + 2 Itlog (Bukas)</button>
+          <button class="chip" onclick="loadSample(2)">Ate Marites: 1 Coke Litro + 1 Corned Beef (Kinsenas)</button>
+          <button class="chip" onclick="loadSample(3)">Mang Kanor: 1/4 Asukal + 2 Kopiko (Biyernes)</button>
+        </div>
+      </div>
+
+      <!-- Tap Fallback Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Step 1B: Tap Fallback (If Voice / Mic Fails)</span>
+          <span class="badge warn">Zero-Voice Backup</span>
+        </div>
+        <p style="font-size:0.8rem; color:var(--ink-muted); margin-bottom:6px;">
+          Too noisy at the counter? Tap a customer and tap items below to populate the confirmation card directly:
+        </p>
+        <label>1. Tap Customer:</label>
+        <div class="fallback-chips" id="fallbackDebtors">
+          <button class="chip" onclick="setFallbackDebtor('Aling Nena')">Aling Nena</button>
+          <button class="chip" onclick="setFallbackDebtor('Kuya Jojo')">Kuya Jojo</button>
+          <button class="chip" onclick="setFallbackDebtor('Ate Marites')">Ate Marites</button>
+          <button class="chip" onclick="setFallbackDebtor('Mang Kanor')">Mang Kanor</button>
+        </div>
+        <label>2. Tap Item to Add (Prices from Owner Price List):</label>
+        <div class="fallback-chips" id="fallbackItems"></div>
+      </div>
+    </div>
+
+    <!-- Step 2: Owner Confirmation & Correction Card -->
+    <div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Step 2: Owner Confirmation &amp; Correction</span>
+          <span class="badge" id="timingBadge">Measured: -- ms</span>
+        </div>
+
+        <div class="notice-box" id="safetyBanner">
+          <strong>Human-in-the-Loop Guarantee:</strong> AI only extracts names &amp; quantities. Unit prices come strictly from your Price List. Balance updates only after you tap <em>Confirm &amp; Update Lista</em>.
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1.3fr 1fr; gap:8px;">
+          <div>
+            <label for="confirmDebtor">Customer / Debtor Name:</label>
+            <input type="text" id="confirmDebtor" placeholder="e.g., Aling Nena" oninput="markEdited()" />
+          </div>
+          <div>
+            <label for="confirmDue">Promised Due Date:</label>
+            <input type="text" id="confirmDue" placeholder="e.g., Sa Sabado" oninput="markEdited()" />
+          </div>
+        </div>
+
+        <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center;">
+          <label style="margin:0;">Extracted / Selected Items (Owner Can Correct):</label>
+          <button class="btn btn-outline" style="padding:4px 8px; font-size:0.75rem;" onclick="addBlankLine()">+ Add Item Row</button>
+        </div>
+
+        <div id="confirmItemsList" style="margin-top:6px;"></div>
+
+        <div class="total-bar">
+          <span>Deterministic Total (Plain Code):</span>
+          <span id="confirmTotalDisplay">PHP 0.00</span>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-primary" style="flex:1; padding:12px;" onclick="confirmAndCommit()">
+            Confirm &amp; Update Lista
+          </button>
+          <button class="btn btn-outline" onclick="clearConfirmation()">Clear</button>
+        </div>
+
+        <div id="commitFeedback" class="notice-box hidden" style="margin-top:10px; background:#dcfce7; border-color:#86efac; color:#14532d;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: UTANG LEDGER & MANUAL REMINDERS -->
+  <div id="tab-ledger" class="hidden">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Active Customer Utang Balances (Deterministic Ledger)</span>
+        <span class="badge ok" id="ledgerCountBadge">0 Customers</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Customer</th>
+            <th>Entries</th>
+            <th>Promised Due</th>
+            <th>Running Balance</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="ledgerTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Manual Reminder Draft Card -->
+    <div class="card hidden" id="reminderModalCard">
+      <div class="card-header">
+        <span class="card-title">Drafted Polite Tagalog Reminder (Owner Sends Manually)</span>
+        <span class="badge warn">Manual Send Only • RA 10173 Compliant</span>
+      </div>
+      <p style="font-size:0.8rem; color:var(--ink-muted); margin-bottom:8px;">
+        TindaWise never sends automatic background SMS messages. Review or edit the message below, then copy it or open your phone's native SMS/Messenger app:
+      </p>
+      <textarea id="reminderTextBox" rows="3"></textarea>
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <button class="btn btn-primary" onclick="copyReminderText()">Copy Reminder Text</button>
+        <a id="smsDeepLink" class="btn btn-accent" style="text-decoration:none; display:inline-block;" href="#">Open in Native SMS App</a>
+        <button class="btn btn-outline" onclick="document.getElementById('reminderModalCard').classList.add('hidden')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: OWNER-EDITABLE PRICE LIST -->
+  <div id="tab-prices" class="hidden">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Owner-Editable Store Price List (Presyo)</span>
+        <span class="badge ok">Model Never Guesses Prices</span>
+      </div>
+      <p style="font-size:0.82rem; color:var(--ink-muted); margin-bottom:12px;">
+        Every voice or tap entry looks up unit prices strictly from this list. Edit any price or add a new store item below:
+      </p>
+      <div style="display:grid; grid-template-columns: 1fr 1.6fr 0.7fr 0.8fr 1.5fr auto; gap:8px; align-items:end; margin-bottom:14px; background:var(--surface-alt); padding:10px; border-radius:8px;">
+        <div>
+          <label>SKU Code</label>
+          <input type="text" id="newSku" placeholder="SKU-TINAPA" />
+        </div>
+        <div>
+          <label>Item Name</label>
+          <input type="text" id="newName" placeholder="Tinapa (1 Tali)" />
+        </div>
+        <div>
+          <label>Unit</label>
+          <input type="text" id="newUnit" placeholder="pack" value="pc" />
+        </div>
+        <div>
+          <label>Unit Price (PHP)</label>
+          <input type="number" step="0.50" id="newPrice" placeholder="35.00" />
+        </div>
+        <div>
+          <label>Taglish Spoken Aliases (comma-separated)</label>
+          <input type="text" id="newAliases" placeholder="tinapa, isda" />
+        </div>
+        <button class="btn btn-primary" onclick="saveNewPriceItem()">Save Item</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>SKU</th>
+            <th>Store Item Name</th>
+            <th>Unit</th>
+            <th>Spoken Taglish Aliases</th>
+            <th>Owner Price (PHP)</th>
+          </tr>
+        </thead>
+        <tbody id="priceTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SAMPLES = [
+    "Palista kay Aling Nena dalawang Lucky Me canton saka isang sardinas, sa Sabado bayad.",
+    "Pautang daw si Kuya Jojo ng kalahating kilong bigas at dalawang itlog, bukas babayaran.",
+    "Kay Ate Marites isang Coke litro saka isang corned beef, bayaran sa kinsenas.",
+    "Lista muna kay Mang Kanor isang kapat na asukal at dalawang Kopiko black, sa Biyernes ang bayad."
+  ];
+
+  let priceCatalog = [
+    { sku_id: "SKU-CANTON", canonical_name: "Lucky Me Pancit Canton", unit: "pack", unit_price: 16.00, aliases: ["pancit canton", "lucky me canton", "canton"] },
+    { sku_id: "SKU-SARDINAS", canonical_name: "Sardinas (Mega / 555 155g)", unit: "can", unit_price: 26.00, aliases: ["sardinas", "mega sardinas", "555 sardinas"] },
+    { sku_id: "SKU-CORNED-BEEF", canonical_name: "Argentina Corned Beef (150g)", unit: "can", unit_price: 38.00, aliases: ["corned beef", "argentina"] },
+    { sku_id: "SKU-BIGAS-KG", canonical_name: "Well-Milled Bigas (Rice)", unit: "kg", unit_price: 54.00, aliases: ["bigas", "kilong bigas", "rice"] },
+    { sku_id: "SKU-ASUKAL-KG", canonical_name: "Washed Sugar (Asukal)", unit: "kg", unit_price: 88.00, aliases: ["asukal", "sugar"] },
+    { sku_id: "SKU-ITLOG", canonical_name: "Itlog (Medium Egg)", unit: "pc", unit_price: 9.00, aliases: ["itlog", "egg"] },
+    { sku_id: "SKU-MANTIKA-TINGI", canonical_name: "Mantika Tingi (Cooking Oil)", unit: "pack", unit_price: 20.00, aliases: ["mantika", "mantika tingi"] },
+    { sku_id: "SKU-COKE-MISMO", canonical_name: "Coke / Sprite Mismo (290ml)", unit: "bottle", unit_price: 22.00, aliases: ["coke mismo", "mismo"] },
+    { sku_id: "SKU-COKE-LITRO", canonical_name: "Coke 1 Litro / Kasalo", unit: "bottle", unit_price: 45.00, aliases: ["coke litro", "coke 1l"] },
+    { sku_id: "SKU-KOPIKO", canonical_name: "Kopiko Black / Brown Twin Pack", unit: "sachet", unit_price: 15.00, aliases: ["kopiko", "kopiko black", "kape"] }
+  ];
+
+  let currentDraft = {
+    source_mode: "voice_confirmed",
+    raw_transcript: "",
+    debtor_name: "",
+    due_date_raw: "",
+    was_corrected: false,
+    items: []
+  };
+
+  let ledgerDebtors = [
+    {
+      debtor_id: 1,
+      debtor_name: "Aling Nena",
+      entries: 1,
+      latest_due_raw: "Sa Sabado",
+      running_balance: 58.00,
+      items_log: ["2x Lucky Me Pancit Canton (PHP 32.00)", "1x Sardinas (PHP 26.00)"]
+    }
+  ];
+
+  function switchTab(tab) {
+    ["counter", "ledger", "prices"].forEach(t => {
+      document.getElementById("tab-" + t).classList.toggle("hidden", t !== tab);
+      document.getElementById("tabBtn" + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle("active", t === tab);
+    });
+    if (tab === "ledger") renderLedgerTable();
+    if (tab === "prices") renderPriceTable();
+  }
+
+  function renderFallbackButtons() {
+    const container = document.getElementById("fallbackItems");
+    container.innerHTML = "";
+    priceCatalog.forEach(item => {
+      const btn = document.createElement("button");
+      btn.className = "chip";
+      btn.textContent = `${item.canonical_name.split(" (")[0]} (₱${item.unit_price.toFixed(2)})`;
+      btn.onclick = () => addFallbackItem(item.sku_id);
+      container.appendChild(btn);
+    });
+  }
+
+  function setFallbackDebtor(name) {
+    document.getElementById("confirmDebtor").value = name;
+    if (!document.getElementById("confirmDue").value) {
+      document.getElementById("confirmDue").value = "Sa Sabado";
+    }
+    currentDraft.source_mode = "tap_fallback";
+    document.getElementById("timingBadge").textContent = "Mode: Tap Fallback";
+  }
+
+  function addFallbackItem(skuId) {
+    currentDraft.source_mode = "tap_fallback";
+    const existing = currentDraft.items.find(i => i.sku_id === skuId);
+    if (existing) {
+      existing.quantity = +(existing.quantity + 1).toFixed(2);
+    } else {
+      currentDraft.items.push({ sku_id: skuId, quantity: 1 });
+    }
+    document.getElementById("timingBadge").textContent = "Mode: Tap Fallback";
+    renderConfirmationCard();
+  }
+
+  function loadSample(idx) {
+    document.getElementById("utteranceInput").value = SAMPLES[idx];
+    runExtraction(false);
+  }
+
+  function localExtract(text, simulateMishear) {
+    const t0 = performance.now();
+    const lower = text.toLowerCase();
+
+    // Debtor extraction
+    let debtor = "Aling Nena";
+    const mHon = text.match(/\b((?:Aling|Mang|Kuya|Ate|Nanay|Tatay|Pareng)\s+[A-Za-z]+)/i);
+    if (mHon) debtor = mHon[1];
+
+    // Due date extraction
+    let due = "Walang tiyak na petsa";
+    ["Sabado", "Lunes", "Martes", "Miyerkules", "Huwebes", "Biyernes", "Linggo", "Bukas", "Kinsenas", "Katapusan"].forEach(d => {
+      if (lower.includes(d.toLowerCase())) due = d === "Bukas" ? "Bukas" : "Sa " + d;
+    });
+
+    const qtyWords = [
+      ["isang kapat", 0.25], ["1/4", 0.25], ["kalahating", 0.5], ["kalahati", 0.5], ["1/2", 0.5],
+      ["isang", 1], ["isa", 1], ["dalawang", 2], ["dalawa", 2], ["tatlong", 3], ["tatlo", 3],
+      ["apat", 4], ["limang", 5], ["lima", 5]
+    ];
+
+    const items = [];
+    priceCatalog.forEach(cat => {
+      for (const alias of cat.aliases) {
+        const idx = lower.indexOf(alias);
+        if (idx !== -1) {
+          const prefix = lower.slice(Math.max(0, idx - 32), idx).split(/saka|at|tapos|,/i).pop();
+          let q = 1;
+          for (const [w, val] of qtyWords) {
+            if (prefix.includes(w)) { q = val; break; }
+          }
+          items.push({ sku_id: cat.sku_id, quantity: simulateMishear && items.length === 0 ? q + 1 : q });
+          break;
+        }
+      }
+    });
+
+    const elapsed = (performance.now() - t0).toFixed(1);
+    return { debtor, due, items, elapsed };
+  }
+
+  async function runExtraction(simulateMishear) {
+    const text = document.getElementById("utteranceInput").value.trim();
+    if (!text) return;
+
+    const res = localExtract(text, simulateMishear);
+    currentDraft = {
+      source_mode: "voice_confirmed",
+      raw_transcript: text,
+      debtor_name: res.debtor,
+      due_date_raw: res.due,
+      was_corrected: false,
+      items: res.items
+    };
+    document.getElementById("confirmDebtor").value = res.debtor;
+    document.getElementById("confirmDue").value = res.due;
+    document.getElementById("timingBadge").textContent = simulateMishear
+      ? `Noisy Demo (${res.elapsed} ms) — Please Correct Qty`
+      : `Measured Local Extract: ${res.elapsed} ms`;
+    renderConfirmationCard();
+  }
+
+  function markEdited() {
+    currentDraft.was_corrected = true;
+  }
+
+  function renderConfirmationCard() {
+    const listEl = document.getElementById("confirmItemsList");
+    listEl.innerHTML = "";
+    let grandTotal = 0;
+
+    currentDraft.items.forEach((line, idx) => {
+      const cat = priceCatalog.find(c => c.sku_id === line.sku_id) || priceCatalog[0];
+      const sub = +(line.quantity * cat.unit_price).toFixed(2);
+      grandTotal += sub;
+
+      const row = document.createElement("div");
+      row.className = "line-item-row";
+
+      const sel = document.createElement("select");
+      priceCatalog.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.sku_id;
+        opt.textContent = `${c.canonical_name} (₱${c.unit_price.toFixed(2)}/${c.unit})`;
+        if (c.sku_id === line.sku_id) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.onchange = e => {
+        currentDraft.items[idx].sku_id = e.target.value;
+        currentDraft.was_corrected = true;
+        renderConfirmationCard();
+      };
+
+      const qtyDiv = document.createElement("div");
+      qtyDiv.className = "qty-ctrl";
+      qtyDiv.innerHTML = `
+        <button class="qty-btn" onclick="changeQty(${idx}, -0.5)">-</button>
+        <input type="number" step="0.25" value="${line.quantity}" style="width:62px; text-align:center;" onchange="setQty(${idx}, this.value)" />
+        <button class="qty-btn" onclick="changeQty(${idx}, 0.5)">+</button>
+      `;
+
+      const subSpan = document.createElement("div");
+      subSpan.style.fontWeight = "700";
+      subSpan.style.textAlign = "right";
+      subSpan.textContent = `₱${sub.toFixed(2)}`;
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "btn btn-danger";
+      delBtn.style.padding = "4px 8px";
+      delBtn.textContent = "×";
+      delBtn.onclick = () => {
+        currentDraft.items.splice(idx, 1);
+        currentDraft.was_corrected = true;
+        renderConfirmationCard();
+      };
+
+      row.appendChild(sel);
+      row.appendChild(qtyDiv);
+      row.appendChild(subSpan);
+      row.appendChild(delBtn);
+      listEl.appendChild(row);
+    });
+
+    document.getElementById("confirmTotalDisplay").textContent = `PHP ${grandTotal.toFixed(2)}`;
+  }
+
+  function changeQty(idx, delta) {
+    const next = Math.max(0.25, +(currentDraft.items[idx].quantity + delta).toFixed(2));
+    currentDraft.items[idx].quantity = next;
+    currentDraft.was_corrected = true;
+    renderConfirmationCard();
+  }
+
+  function setQty(idx, val) {
+    const parsed = parseFloat(val);
+    if (!isNaN(parsed) && parsed > 0) {
+      currentDraft.items[idx].quantity = +parsed.toFixed(2);
+      currentDraft.was_corrected = true;
+      renderConfirmationCard();
+    }
+  }
+
+  function addBlankLine() {
+    currentDraft.items.push({ sku_id: priceCatalog[0].sku_id, quantity: 1 });
+    currentDraft.was_corrected = true;
+    renderConfirmationCard();
+  }
+
+  function clearConfirmation() {
+    currentDraft.items = [];
+    document.getElementById("confirmDebtor").value = "";
+    document.getElementById("confirmDue").value = "";
+    renderConfirmationCard();
+  }
+
+  function confirmAndCommit() {
+    const debtor = document.getElementById("confirmDebtor").value.trim();
+    const due = document.getElementById("confirmDue").value.trim() || "Walang tiyak na petsa";
+    if (!debtor || currentDraft.items.length === 0) {
+      alert("Please confirm the customer name and at least one item before saving.");
+      return;
+    }
+
+    let entryTotal = 0;
+    const summaryLines = [];
+    currentDraft.items.forEach(line => {
+      const cat = priceCatalog.find(c => c.sku_id === line.sku_id);
+      const sub = +(line.quantity * cat.unit_price).toFixed(2);
+      entryTotal += sub;
+      summaryLines.push(`${line.quantity}x ${cat.canonical_name} (PHP ${sub.toFixed(2)})`);
+    });
+
+    let existing = ledgerDebtors.find(d => d.debtor_name.toLowerCase() === debtor.toLowerCase());
+    if (existing) {
+      existing.running_balance = +(existing.running_balance + entryTotal).toFixed(2);
+      existing.entries += 1;
+      existing.latest_due_raw = due;
+      existing.items_log.unshift(...summaryLines);
+    } else {
+      ledgerDebtors.unshift({
+        debtor_id: ledgerDebtors.length + 1,
+        debtor_name: debtor,
+        entries: 1,
+        latest_due_raw: due,
+        running_balance: +entryTotal.toFixed(2),
+        items_log: summaryLines
+      });
+    }
+
+    const fb = document.getElementById("commitFeedback");
+    fb.classList.remove("hidden");
+    fb.innerHTML = `<strong>Saved to Lista!</strong> ${debtor} (+PHP ${entryTotal.toFixed(2)}) • Mode: ${currentDraft.source_mode} ${currentDraft.was_corrected ? "(Owner Corrected)" : "(Confirmed)"}.`;
+    setTimeout(() => fb.classList.add("hidden"), 4500);
+  }
+
+  function renderLedgerTable() {
+    const tbody = document.getElementById("ledgerTableBody");
+    tbody.innerHTML = "";
+    document.getElementById("ledgerCountBadge").textContent = `${ledgerDebtors.length} Customers`;
+
+    ledgerDebtors.forEach(d => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${d.debtor_name}</strong><br/><span style="font-size:0.75rem; color:var(--ink-muted);">${d.items_log.slice(0,2).join(", ")}</span></td>
+        <td>${d.entries}</td>
+        <td>${d.latest_due_raw}</td>
+        <td><strong>PHP ${d.running_balance.toFixed(2)}</strong></td>
+        <td style="display:flex; gap:6px;">
+          <button class="btn btn-primary" style="padding:5px 10px; font-size:0.78rem;" onclick="openReminderDraft(${d.debtor_id})">Draft Reminder</button>
+          <button class="btn btn-outline" style="padding:5px 10px; font-size:0.78rem;" onclick="markPaid(${d.debtor_id})">Record Payment</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function openReminderDraft(debtorId) {
+    const d = ledgerDebtors.find(x => x.debtor_id === debtorId);
+    if (!d) return;
+    const msg = `Magandang araw po ${d.debtor_name}! Paalala lang po mula sa Tindahan ni Nanay para sa inyong lista: ${d.items_log.slice(0, 3).join(", ")}. Kabuuang balanse: PHP ${d.running_balance.toFixed(2)} (${d.latest_due_raw}). Maraming salamat po!`;
+    document.getElementById("reminderTextBox").value = msg;
+    document.getElementById("smsDeepLink").href = `sms:?body=${encodeURIComponent(msg)}`;
+    document.getElementById("reminderModalCard").classList.remove("hidden");
+  }
+
+  function copyReminderText() {
+    const box = document.getElementById("reminderTextBox");
+    box.select();
+    navigator.clipboard.writeText(box.value);
+    alert("Reminder copied to clipboard! Paste into Messenger, Viber, or SMS.");
+  }
+
+  function markPaid(debtorId) {
+    const d = ledgerDebtors.find(x => x.debtor_id === debtorId);
+    if (!d) return;
+    const amt = prompt(`Enter payment amount for ${d.debtor_name} (Current Balance: PHP ${d.running_balance.toFixed(2)}):`, d.running_balance.toFixed(2));
+    if (!amt) return;
+    const val = parseFloat(amt);
+    if (!isNaN(val) && val > 0) {
+      d.running_balance = Math.max(0, +(d.running_balance - val).toFixed(2));
+      renderLedgerTable();
+    }
+  }
+
+  function renderPriceTable() {
+    const tbody = document.getElementById("priceTableBody");
+    tbody.innerHTML = "";
+    priceCatalog.forEach((item, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><code>${item.sku_id}</code></td>
+        <td><strong>${item.canonical_name}</strong></td>
+        <td>${item.unit}</td>
+        <td>${item.aliases.join(", ")}</td>
+        <td>
+          <input type="number" step="0.50" value="${item.unit_price.toFixed(2)}" style="width:95px;" onchange="updateUnitPrice(${idx}, this.value)" />
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function updateUnitPrice(idx, val) {
+    const p = parseFloat(val);
+    if (!isNaN(p) && p > 0) {
+      priceCatalog[idx].unit_price = +p.toFixed(2);
+      renderFallbackButtons();
+      renderConfirmationCard();
+    }
+  }
+
+  function saveNewPriceItem() {
+    const sku = document.getElementById("newSku").value.trim().toUpperCase() || ("SKU-" + Date.now());
+    const name = document.getElementById("newName").value.trim();
+    const unit = document.getElementById("newUnit").value.trim() || "pc";
+    const price = parseFloat(document.getElementById("newPrice").value);
+    const aliases = document.getElementById("newAliases").value.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+    if (!name || isNaN(price) || price <= 0) {
+      alert("Please enter an item name and valid price greater than 0.");
+      return;
+    }
+    if (!aliases.includes(name.toLowerCase())) aliases.push(name.toLowerCase());
+    priceCatalog.unshift({ sku_id: sku, canonical_name: name, unit, unit_price: +price.toFixed(2), aliases });
+    renderPriceTable();
+    renderFallbackButtons();
+  }
+
+  function toggleVoiceCapture() {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) {
+      loadSample(0);
+      return;
+    }
+    const rec = new SpeechRec();
+    rec.lang = "fil-PH";
+    const btn = document.getElementById("pttBtn");
+    btn.classList.add("recording");
+    document.getElementById("pttLabel").textContent = "Listening... Speak Taglish Utang Now";
+    rec.onresult = e => {
+      const transcript = e.results[0][0].transcript;
+      document.getElementById("utteranceInput").value = transcript;
+      runExtraction(false);
+    };
+    rec.onend = () => {
+      btn.classList.remove("recording");
+      document.getElementById("pttLabel").textContent = "Hold / Tap to Speak Taglish Utang";
+    };
+    rec.start();
+  }
+
+  function togglePrivacyModal() {
+    alert(
+      "RA 10173 Data Privacy Act Compliance:\n\n" +
+      "1. Ephemeral Audio (0-Day Retention): Audio is captured only on push-to-talk and deleted immediately after speech-to-text.\n" +
+      "2. Local Ledger Storage: Debtor nicknames and balances stay on the store owner's device.\n" +
+      "3. Manual Reminder Only: TindaWise drafts reminders locally; the owner manually sends via their own SMS/Messenger app."
+    );
+  }
+
+  // Initialize first sample on load
+  renderFallbackButtons();
+  loadSample(0);
+</script>
+</body>
+</html>
