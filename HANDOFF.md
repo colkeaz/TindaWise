@@ -1,14 +1,15 @@
 # TindaWise — Project Handoff & Architecture Guide
+
 **Tech Connect: SYNC AIdeathon (2026) | BatStateU The NEU – Alangilan**  
-*Hosted by the Center for Technopreneurship and Innovation (CTI) & Center for Artificial Intelligence and Smart Technologies (CAIST)*
+_Hosted by the Center for Technopreneurship and Innovation (CTI) & Center for Artificial Intelligence and Smart Technologies (CAIST)_
 
 ---
 
 ## 1. Project Context & Objectives
 
-**TindaWise** is a human-in-the-loop, voice-to-lista counter copilot engineered specifically for Philippine neighborhood *sari-sari* store micro-retailers.
+**TindaWise** is a human-in-the-loop, voice-to-lista counter copilot engineered specifically for Philippine neighborhood _sari-sari_ store micro-retailers.
 
-In traditional stores, logging micro-credit (*utang sa listahan*) in paper notebooks creates friction during counter rush hours, leading to forgotten transactions, illegible debt records, and uncollected debt that eats away working capital. Existing generic digital ledger apps (e.g., Lista PH, Peddlr) require 4 to 8 manual screen taps per item, causing store owners to abandon them during peak hours.
+In traditional stores, logging micro-credit (_utang sa listahan_) in paper notebooks creates friction during counter rush hours, leading to forgotten transactions, illegible debt records, and uncollected debt that eats away working capital. Existing generic digital ledger apps (e.g., Lista PH, Peddlr) require 4 to 8 manual screen taps per item, causing store owners to abandon them during peak hours.
 
 TindaWise solves this with a **3-second spoken Taglish workflow** backed by deterministic financial guardrails:
 $$\text{Spoken Taglish Utterance} \longrightarrow \text{Ephemeral STT} \longrightarrow \text{Entity Extraction} \longrightarrow \text{Owner Price List Match} \longrightarrow \text{Owner Confirmation} \longrightarrow \text{Deterministic Ledger Update}$$
@@ -45,29 +46,35 @@ This repository holds the self-contained, production-grade codebase for TindaWis
 
 ## 3. Core Architectural Guardrails
 
-| Guardrail | Implementation | Why It Matters |
-| :--- | :--- | :--- |
-| **Model Never Guesses Money** | Extractor only extracts `{debtor_name, items: [{sku_id, quantity}], due_date}`. All monetary computations query `price_items` using Python `Decimal(quantize="0.01")`. | Prevents LLM financial hallucinations; guarantees zero ledger math errors. |
-| **Human-in-the-Loop Confirmation** | Previews returned by `POST /api/extract-utang` are strictly ephemeral and do not mutate SQLite records. Changes only commit on `POST /api/ledger/confirm` with `owner_confirmed=True`. | Store owners retain 100% control over counter transactions. |
-| **Noisy Counter Fallback** | Frontend includes a **1-Tap Quick Fallback** bar for peak store noise (tricycles, street chatter). | Zero-voice entry ensures the store owner is never blocked if voice capture is impeded. |
-| **RA 10173 Data Privacy** | Audio buffers are processed ephemerally in RAM with **0-day audio retention**. Customer records use neighborhood nicknames. Reminder SMS templates are generated client-side for owner manual dispatch. | Zero automated unsolicited harassment, complete regulatory compliance. |
+| Guardrail                          | Implementation                                                                                                                                                                                          | Why It Matters                                                                         |
+| :--------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------------- |
+| **Model Never Guesses Money**      | Extractor only extracts `{debtor_name, items: [{sku_id, quantity}], due_date}`. All monetary computations query `price_items` using Python `Decimal(quantize="0.01")`.                                  | Prevents LLM financial hallucinations; guarantees zero ledger math errors.             |
+| **Human-in-the-Loop Confirmation** | Previews returned by `POST /api/extract-utang` are strictly ephemeral and do not mutate SQLite records. Changes only commit on `POST /api/ledger/confirm` with `owner_confirmed=True`.                  | Store owners retain 100% control over counter transactions.                            |
+| **Noisy Counter Fallback**         | Frontend includes a **1-Tap Quick Fallback** bar for peak store noise (tricycles, street chatter).                                                                                                      | Zero-voice entry ensures the store owner is never blocked if voice capture is impeded. |
+| **RA 10173 Data Privacy**          | Audio buffers are processed ephemerally in RAM with **0-day audio retention**. Customer records use neighborhood nicknames. Reminder SMS templates are generated client-side for owner manual dispatch. | Zero automated unsolicited harassment, complete regulatory compliance.                 |
 
 ---
 
 ## 4. Verification & Testing Playbook
 
 ### Running Unit Tests
+
 Verifies that extraction previews never alter balances, prices are resolved from the owner catalog, and partial payments calculate correctly:
+
 ```powershell
 python -m unittest tests/test_ledger_engine.py -v
 ```
 
 ### Running the Empirical Benchmark
+
 Evaluates 36 multi-speaker Taglish utterances under 4 counter noise conditions (Quiet, Street Chatter, Tricycle/Motorcycle, Rainy Counter):
+
 ```powershell
 python src/eval/evaluate_voice_utang.py
 ```
+
 **Expected Benchmark Results:**
+
 - Debtor Name Accuracy: **94.4%**
 - Item & Quantity Extraction: **94.4%**
 - Deterministic Total Match: **94.4%**
@@ -76,9 +83,11 @@ python src/eval/evaluate_voice_utang.py
 - Time Saved vs Paper Notebook: **73.4%** faster (6.76s vs 25.46s)
 
 ### Running the Live Counter Server
+
 ```powershell
 uvicorn app:app --app-dir src/backend --reload --port 8000
 ```
+
 Then navigate to `http://localhost:8000` in any web or mobile browser.
 
 ---
@@ -89,8 +98,7 @@ All non-codebase hackathon materials (the formal Word `.docx` proposals, custome
 
 - **Formal Competition Proposal:** `handoff/proposals/TindaWise_Project_Proposal.docx` (Calibri 11pt, 1-inch margins, colored tables, fully audit-checked).
 - **Pitch Deck & Q&A Defense Script:** `handoff/validation/Validation_and_Checklist_Pack.md` (2-minute countdown pitch script and 5-minute technical defense against judge questions).
-- **Customer Discovery Protocol:** 3 sari-sari store owner interview questionnaires with the **Pivot Decision Rule** (pivot to *KitaKusina* if 2 of 3 owners fail validation).
+- **Customer Discovery Protocol:** 3 sari-sari store owner interview questionnaires with the **Pivot Decision Rule** (pivot to _KitaKusina_ if 2 of 3 owners fail validation).
 - **Document Generation Scripts:** `handoff/scripts/generate_proposals.py` and `handoff/scripts/verify_submission_pack.py`.
 
 Refer to `handoff/README.md` for complete details on the competition submission workflow.
-
