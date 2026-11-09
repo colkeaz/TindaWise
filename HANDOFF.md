@@ -93,3 +93,4 @@ All non-codebase hackathon materials (the formal Word `.docx` proposals, custome
 - **Document Generation Scripts:** `handoff/scripts/generate_proposals.py` and `handoff/scripts/verify_submission_pack.py`.
 
 Refer to `handoff/README.md` for complete details on the competition submission workflow.
+
