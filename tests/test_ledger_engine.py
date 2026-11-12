@@ -143,8 +143,69 @@ class TestTindaWiseLedgerEngine(unittest.TestCase):
         reminder = self.engine.draft_manual_reminder(debtor_id=committed["debtor_id"])
         self.assertEqual(reminder["delivery_mode"], "manual_owner_send_only")
         self.assertIn("PHP 24.00", reminder["message_text"])
+        self.assertIn("Aling Nena", reminder["face_to_face_script"])
         self.assertTrue(reminder["sms_uri"].startswith("sms:09171234567?body="))
+
+    def test_direct_peso_utang_without_sku_catalog(self) -> None:
+        """
+        Verifies Interview Implication #1 & #6 (Kuya Ronny & Ate Mina):
+        Store owners can log a fast peso amount via voice or tap ('singkwenta pesos na ulam', 'bente pesos')
+        without needing the item pre-registered in the SKU catalog.
+        """
+        preview = self.engine.extract_utang_preview(
+            transcript_text="Palista kay Kuya Ronny singkwenta pesos na ulam",
+            prefer_cloud_api=False,
+        )
+        self.assertEqual(preview.debtor_name, "Kuya Ronny")
+        self.assertEqual(preview.computed_total, "50.00")
+        self.assertEqual(len(preview.items), 1)
+        self.assertEqual(preview.items[0].matched_sku_id, "SKU-DIRECT-PESO")
+        self.assertEqual(preview.due_date_raw, "Walang tiyak na petsa")
+
+        committed = self.engine.confirm_and_record_utang(
+            debtor_name=preview.debtor_name,
+            items=[
+                {
+                    "sku_id": "SKU-DIRECT-PESO",
+                    "item_name": preview.items[0].canonical_name,
+                    "quantity": "1",
+                    "unit_price": preview.items[0].unit_price,
+                }
+            ],
+            owner_confirmed=True,
+            source_mode="voice_confirmed",
+            trust_tag="Kakilala",
+        )
+        self.assertEqual(committed["new_running_balance"], "50.00")
+        self.assertEqual(committed["trust_tag"], "Kakilala")
+
+    def test_debtor_itemized_history_and_face_to_face_reminder(self) -> None:
+        """
+        Verifies Ate Mina's walk-by verification workflow: retrieving full itemized
+        transaction and payment history when a customer forgets what or when they borrowed.
+        """
+        res = self.engine.confirm_and_record_utang(
+            debtor_name="Ate Mina Suki",
+            items=[
+                {"sku_id": "SKU-CANTON", "item_name": "Pancit Canton", "quantity": "2"},
+                {"sku_id": "SKU-ITLOG", "item_name": "Itlog", "quantity": "2"},
+            ],
+            owner_confirmed=True,
+            trust_tag="Suki",
+        )
+        debtor_id = res["debtor_id"]
+        self.engine.record_payment(debtor_id=debtor_id, amount_paid="20.00", note="Partial bayad")
+
+        history = self.engine.get_debtor_history(debtor_id=debtor_id)
+        self.assertEqual(history["debtor"]["debtor_name"], "Ate Mina Suki")
+        self.assertEqual(history["debtor"]["trust_tag"], "Suki")
+        self.assertEqual(history["debtor"]["running_balance"], "30.00")
+        self.assertEqual(len(history["entries"]), 1)
+        self.assertEqual(len(history["entries"][0]["items"]), 2)
+        self.assertEqual(len(history["payments"]), 1)
+        self.assertEqual(history["payments"][0]["amount_paid"], "20.00")
 
 
 if __name__ == "__main__":
     unittest.main()
+

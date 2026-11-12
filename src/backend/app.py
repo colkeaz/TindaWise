@@ -1,11 +1,12 @@
 """
 TindaWise FastAPI Application Server
-Provides REST APIs for:
+Provides REST APIs informed by Sari-Sari Store Owner Field Interviews (Kuya Ronny Bautista & Ate Mina):
 - Owner-editable price list (`GET /api/prices`, `POST /api/prices`)
-- Ephemeral STT + AI extraction preview (`POST /api/extract-utang`)
-- Human-in-the-loop owner confirmation & deterministic ledger update (`POST /api/ledger/confirm`)
-- Tap fallback entry (`POST /api/ledger/confirm` with `source_mode="tap_fallback"`)
-- Debtor balances & manual reminder drafting (`GET /api/ledger/debtors`, `GET /api/ledger/reminder/{debtor_id}`)
+- Ephemeral STT + AI extraction preview supporting SKU catalog & direct peso utang (`POST /api/extract-utang`)
+- Human-in-the-loop owner confirmation, Suki/Kakilala trust tags & deterministic ledger update (`POST /api/ledger/confirm`)
+- 1-Tap Simple Kwaderno & Quick Peso fallback entry (`POST /api/ledger/confirm` with `source_mode="tap_fallback"`)
+- Debtor balances, walk-by itemized history & face-to-face / SMS reminder drafting (`GET /api/ledger/debtors`, `GET /api/ledger/debtors/{debtor_id}`, `GET /api/ledger/reminder/{debtor_id}`)
+- Full or partial debt repayment (`POST /api/ledger/pay`, `POST /api/ledger/payment`)
 - RA 10173 Data Privacy compliance summary (`GET /api/privacy`)
 """
 
@@ -74,6 +75,7 @@ class ConfirmUtangRequest(BaseModel):
     due_date_iso: str = ""
     was_corrected: bool = False
     contact_note: str = ""
+    trust_tag: str = "Suki"
 
 
 class PaymentRequest(BaseModel):
@@ -131,6 +133,7 @@ def confirm_utang(req: ConfirmUtangRequest) -> Dict[str, Any]:
             due_date_iso=req.due_date_iso,
             was_corrected=req.was_corrected,
             contact_note=req.contact_note,
+            trust_tag=req.trust_tag,
         )
         return {"status": "confirmed", "entry": result}
     except ValueError as exc:
@@ -142,7 +145,16 @@ def list_debtors() -> Dict[str, Any]:
     return {"debtors": engine.get_debtors_summary()}
 
 
+@app.get("/api/ledger/debtors/{debtor_id}")
+def get_debtor_history(debtor_id: int) -> Dict[str, Any]:
+    try:
+        return engine.get_debtor_history(debtor_id=debtor_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
 @app.post("/api/ledger/pay")
+@app.post("/api/ledger/payment")
 def pay_utang(req: PaymentRequest) -> Dict[str, Any]:
     try:
         res = engine.record_payment(
@@ -169,5 +181,6 @@ def get_privacy_policy() -> Dict[str, Any]:
         "framework": "Philippine Data Privacy Act of 2012 (RA 10173)",
         "audio_policy": "Push-to-talk only. Ephemeral processing in memory (0-day audio retention; audio deleted immediately after STT).",
         "ledger_storage": "Stored locally on the store owner's device (SQLite / local storage). Uses customer nicknames; no government IDs required.",
-        "reminder_policy": "Drafted locally on device. Sent manually by the store owner via their native SMS or Messenger app (no automated third-party SMS blasting).",
+        "reminder_policy": "Drafted locally on device. Supports face-to-face counter reminders or manual sending via native SMS/Messenger (no automated third-party SMS blasting).",
     }
+

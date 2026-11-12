@@ -1,12 +1,15 @@
 """
 TindaWise Deterministic Ledger, Owner-Editable Price List, and Taglish Utang Extraction Engine.
 
-Design Guarantees:
-1. AI never guesses or sets money amounts. All prices come strictly from the owner-editable price list.
+Design Guarantees & Field Research Alignment (`data/research/sarisaristore_interview.md`):
+1. AI never guesses or sets catalog money amounts. Catalog prices come strictly from the owner-editable price list,
+   while fast non-SKU direct peso utang (`SKU-DIRECT-PESO`, for Kuya Ronny & Ate Mina workflows) requires explicit confirmation.
 2. Unconfirmed AI extractions never mutate debtor balances. Owner confirmation is mandatory.
 3. All balance arithmetic uses Python's exact `Decimal` type (never floating-point).
-4. Data Privacy Act (RA 10173) compliance: Push-to-talk audio is ephemeral (0-day retention, cleared in memory),
-   ledger data is stored locally on the owner's device, and reminders are drafted locally for manual owner sending.
+4. Supports both memory-based (Kuya Ronny) and paper-kwaderno (Ate Mina) workflows: optional due dates,
+   `Suki`/`Kakilala` trust tags, itemized walk-by history (`get_debtor_history`), and face-to-face reminder scripts.
+5. Data Privacy Act (RA 10173) compliance: Push-to-talk audio is ephemeral (0-day retention, cleared in memory),
+   ledger data is stored locally on the owner's device, and reminders are never sent automatically.
 """
 
 from __future__ import annotations
@@ -209,6 +212,7 @@ class TindaWiseEngine:
                 CREATE TABLE IF NOT EXISTS debtors (
                     debtor_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     debtor_name TEXT NOT NULL UNIQUE,
+                    trust_tag TEXT NOT NULL DEFAULT 'Suki',
                     contact_note TEXT DEFAULT '',
                     running_balance TEXT NOT NULL DEFAULT '0.00',
                     created_at TEXT NOT NULL,
@@ -251,6 +255,9 @@ class TindaWiseEngine:
                 );
                 """
             )
+            cols = [r["name"] for r in conn.execute("PRAGMA table_info(debtors);").fetchall()]
+            if "trust_tag" not in cols:
+                conn.execute("ALTER TABLE debtors ADD COLUMN trust_tag TEXT NOT NULL DEFAULT 'Suki';")
             cur = conn.execute("SELECT COUNT(*) AS cnt FROM price_items;")
             if cur.fetchone()["cnt"] == 0:
                 now = datetime.now().isoformat(timespec="seconds")
@@ -432,6 +439,25 @@ class TindaWiseEngine:
             raw_name = str(raw_item.get("raw_name", "")).strip()
             qty_dec = to_qty(raw_item.get("quantity", "1"))
             sku_hint = raw_item.get("sku_id")
+            direct_peso = raw_item.get("direct_peso_amount")
+
+            if sku_hint == "SKU-DIRECT-PESO" and direct_peso is not None:
+                unit_price_dec = to_money(direct_peso)
+                subtotal_dec = (qty_dec * unit_price_dec).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                running_total += subtotal_dec
+                draft_items.append(
+                    ExtractedItemDraft(
+                        raw_name=raw_name or "Pautang (Halaga Lang)",
+                        quantity=str(qty_dec),
+                        matched_sku_id="SKU-DIRECT-PESO",
+                        canonical_name=raw_name or "Pautang (Halaga Lang)",
+                        unit="utang",
+                        unit_price=str(unit_price_dec),
+                        subtotal=str(subtotal_dec),
+                        price_matched=True,
+                    )
+                )
+                continue
 
             matched_entry = self.match_sku_from_price_list(raw_name, sku_hint=sku_hint)
             if matched_entry is not None:
@@ -577,7 +603,9 @@ class TindaWiseEngine:
             stop_words = {
                 "ng", "dalawang", "isang", "tatlong", "apat", "limang", "anim", "pitong",
                 "walong", "siyam", "sampung", "kalahating", "pautang", "utang", "palista",
-                "lista", "daw", "raw", "po", "muna", "saka", "at",
+                "lista", "daw", "raw", "po", "muna", "saka", "at", "bente", "trenta",
+                "kwarenta", "singkwenta", "sinkwenta", "sisenta", "sitenta", "otsenta",
+                "nobenta", "sandaan", "kinse", "sampung", "pesos", "piso",
             }
             tokens = raw_hon.split()
             cleaned = [tokens[0].capitalize()]
@@ -598,7 +626,8 @@ class TindaWiseEngine:
             tokens = m_prep.group(1).split()
             stop_words = {
                 "ng", "dalawang", "isang", "tatlong", "apat", "limang", "kalahating",
-                "pautang", "utang", "daw", "raw", "po", "muna", "saka", "at",
+                "pautang", "utang", "daw", "raw", "po", "muna", "saka", "at", "bente",
+                "trenta", "kwarenta", "singkwenta", "sinkwenta", "kinse", "pesos", "piso",
             }
             cleaned = []
             for tok in tokens:
@@ -748,7 +777,90 @@ class TindaWiseEngine:
                     "sku_id": item["sku_id"],
                 }
             )
+
+        # Interview Implication #1 & #6 (Kuya Ronny & Ate Mina):
+        # Support fast direct peso-amount recording when no SKU catalog item is mentioned
+        # (e.g., "Palista kay Kuya Ronny singkwenta pesos", "Pautang si Ate Mina 25 pesos na ulam").
+        if not results:
+            direct_peso = self._parse_direct_peso_utang(lower)
+            if direct_peso is not None:
+                results.append(direct_peso)
+
         return results
+
+    def _parse_direct_peso_utang(self, lower_text: str) -> Optional[Dict[str, Any]]:
+        """
+        Extracts a direct peso utang amount when no catalog SKU matched in the utterance.
+        Supports numeric ("50 pesos", "₱25", "20 piso") and spoken Tagalog/Chavacano/Spanish-Filipino
+        peso phrases ("bente pesos", "singkwenta pesos", "isang daan").
+        """
+        spoken_peso_map = [
+            ("limang daan", "500.00"),
+            ("dalawang daan", "200.00"),
+            ("isang daan", "100.00"),
+            ("sandaang piso", "100.00"),
+            ("sandaan", "100.00"),
+            ("nobenta", "90.00"),
+            ("otsenta", "80.00"),
+            ("sitenta", "70.00"),
+            ("sisenta", "60.00"),
+            ("singkwenta", "50.00"),
+            ("sinkwenta", "50.00"),
+            ("kwarenta", "40.00"),
+            ("kuwarenta", "40.00"),
+            ("trenta", "30.00"),
+            ("treynta", "30.00"),
+            ("bente singko", "25.00"),
+            ("bente", "20.00"),
+            ("baynte", "20.00"),
+            ("kinse", "15.00"),
+            ("sampung piso", "10.00"),
+            ("limang piso", "5.00"),
+        ]
+        amount_str: Optional[str] = None
+        note_label = "Pautang (Halaga Lang)"
+
+        # 1. Check explicit numeric peso expressions (e.g. "50 pesos", "₱35", "25 piso")
+        m_num_peso = re.search(
+            r"(?:(?:₱|php)\s*(\d+(?:\.\d+)?)|(\d+(?:\.\d+)?)\s*(?:na\s+)?(?:pesos?|piso|php))\b",
+            lower_text,
+            flags=re.IGNORECASE,
+        )
+        if m_num_peso:
+            raw_num = m_num_peso.group(1) or m_num_peso.group(2)
+            amount_str = str(to_money(raw_num))
+            after_match = lower_text[m_num_peso.end():].strip()
+            m_desc = re.match(r"^(?:na\s+|para\s+sa\s+)?([a-zà-ü]+(?:\s+[a-zà-ü]+)?)", after_match)
+            if m_desc:
+                candidate = m_desc.group(1).strip()
+                stop_due = {"sa", "bukas", "bayad", "babayaran", "po", "muna", "daw", "raw"}
+                cleaned_words = [w for w in candidate.split() if w not in stop_due]
+                if cleaned_words:
+                    note_label = f"Pautang ({' '.join(cleaned_words).capitalize()})"
+        else:
+            # 2. Check spoken Tagalog/Spanish-Filipino money words
+            for phrase, val in spoken_peso_map:
+                m_word = re.search(rf"\b{re.escape(phrase)}(?:\s+(?:pesos?|piso))?\b", lower_text)
+                if m_word:
+                    amount_str = val
+                    after_match = lower_text[m_word.end():].strip()
+                    m_desc = re.match(r"^(?:na\s+|para\s+sa\s+)?([a-zà-ü]+(?:\s+[a-zà-ü]+)?)", after_match)
+                    if m_desc:
+                        candidate = m_desc.group(1).strip()
+                        stop_due = {"sa", "bukas", "bayad", "babayaran", "po", "muna", "daw", "raw"}
+                        cleaned_words = [w for w in candidate.split() if w not in stop_due]
+                        if cleaned_words:
+                            note_label = f"Pautang ({' '.join(cleaned_words).capitalize()})"
+                    break
+
+        if amount_str is not None:
+            return {
+                "raw_name": note_label,
+                "quantity": "1",
+                "sku_id": "SKU-DIRECT-PESO",
+                "direct_peso_amount": amount_str,
+            }
+        return None
 
     # ==========================================================================
     # 4. HUMAN-IN-THE-LOOP OWNER CONFIRMATION & DETERMINISTIC LEDGER UPDATE
@@ -764,10 +876,11 @@ class TindaWiseEngine:
         due_date_iso: str = "",
         was_corrected: bool = False,
         contact_note: str = "",
+        trust_tag: str = "Suki",
     ) -> Dict[str, Any]:
         """
         Commits an utang transaction to the SQLite ledger ONLY after explicit owner confirmation.
-        All item prices are verified against the owner's price list (or explicit owner override)
+        All item prices are verified against the owner's price list (or explicit owner override / direct peso amount)
         and summed using exact Decimal arithmetic.
         """
         if not owner_confirmed:
@@ -780,6 +893,7 @@ class TindaWiseEngine:
         if not items:
             raise ValueError("Cannot record an empty utang entry. At least one item is required.")
 
+        clean_trust = (trust_tag or "Suki").strip() or "Suki"
         resolved_lines: List[Dict[str, Any]] = []
         entry_total = Decimal("0.00")
 
@@ -790,23 +904,30 @@ class TindaWiseEngine:
 
             sku_id = line.get("sku_id") or line.get("matched_sku_id")
             raw_name = str(line.get("item_name") or line.get("canonical_name") or line.get("raw_name") or "").strip()
+            override_price = line.get("owner_override_unit_price") or line.get("unit_price")
 
-            catalog_item = self.match_sku_from_price_list(raw_name, sku_hint=sku_id)
-            if catalog_item is not None:
-                unit_price = to_money(catalog_item["unit_price"])
-                final_sku = catalog_item["sku_id"]
-                final_name = catalog_item["canonical_name"]
-                final_unit = catalog_item["unit"]
-            elif line.get("owner_override_unit_price") is not None:
-                # Only allowed if the owner explicitly typed a custom price on the confirmation card
-                unit_price = to_money(line["owner_override_unit_price"])
-                final_sku = "SKU-CUSTOM"
-                final_name = raw_name or "Custom Store Item"
-                final_unit = str(line.get("unit") or "pc")
+            if sku_id in ("SKU-DIRECT-PESO", "SKU-CUSTOM") and override_price is not None:
+                unit_price = to_money(override_price)
+                final_sku = str(sku_id)
+                final_name = raw_name or "Pautang (Halaga Lang)"
+                final_unit = str(line.get("unit") or "utang")
             else:
-                raise ValueError(
-                    f"Item '{raw_name}' is not in the Owner Price List and has no owner_override_unit_price."
-                )
+                catalog_item = self.match_sku_from_price_list(raw_name, sku_hint=sku_id)
+                if catalog_item is not None:
+                    unit_price = to_money(catalog_item["unit_price"])
+                    final_sku = catalog_item["sku_id"]
+                    final_name = catalog_item["canonical_name"]
+                    final_unit = catalog_item["unit"]
+                elif line.get("owner_override_unit_price") is not None:
+                    # Only allowed if the owner explicitly typed a custom price on the confirmation card
+                    unit_price = to_money(line["owner_override_unit_price"])
+                    final_sku = "SKU-CUSTOM"
+                    final_name = raw_name or "Custom Store Item"
+                    final_unit = str(line.get("unit") or "pc")
+                else:
+                    raise ValueError(
+                        f"Item '{raw_name}' is not in the Owner Price List and has no owner_override_unit_price."
+                    )
 
             subtotal = (qty * unit_price).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
             entry_total += subtotal
@@ -824,7 +945,7 @@ class TindaWiseEngine:
         now = datetime.now().isoformat(timespec="seconds")
         with self._connect() as conn:
             row = conn.execute(
-                "SELECT debtor_id, running_balance, contact_note FROM debtors WHERE LOWER(debtor_name) = LOWER(?);",
+                "SELECT debtor_id, running_balance, contact_note, trust_tag FROM debtors WHERE LOWER(debtor_name) = LOWER(?);",
                 (clean_debtor,),
             ).fetchone()
 
@@ -832,21 +953,23 @@ class TindaWiseEngine:
                 new_balance = entry_total
                 cur = conn.execute(
                     """
-                    INSERT INTO debtors (debtor_name, contact_note, running_balance, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?);
+                    INSERT INTO debtors (debtor_name, trust_tag, contact_note, running_balance, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?);
                     """,
-                    (clean_debtor, contact_note.strip(), str(new_balance), now, now),
+                    (clean_debtor, clean_trust, contact_note.strip(), str(new_balance), now, now),
                 )
                 debtor_id = cur.lastrowid
                 prev_balance = Decimal("0.00")
+                saved_trust = clean_trust
             else:
                 debtor_id = row["debtor_id"]
                 prev_balance = to_money(row["running_balance"])
                 new_balance = (prev_balance + entry_total).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                 updated_contact = contact_note.strip() if contact_note.strip() else row["contact_note"]
+                saved_trust = clean_trust if trust_tag else (row["trust_tag"] or "Suki")
                 conn.execute(
-                    "UPDATE debtors SET running_balance = ?, contact_note = ?, updated_at = ? WHERE debtor_id = ?;",
-                    (str(new_balance), updated_contact, now, debtor_id),
+                    "UPDATE debtors SET running_balance = ?, contact_note = ?, trust_tag = ?, updated_at = ? WHERE debtor_id = ?;",
+                    (str(new_balance), updated_contact, saved_trust, now, debtor_id),
                 )
 
             cur_entry = conn.execute(
@@ -894,6 +1017,7 @@ class TindaWiseEngine:
             "entry_id": entry_id,
             "debtor_id": debtor_id,
             "debtor_name": clean_debtor,
+            "trust_tag": saved_trust,
             "source_mode": source_mode,
             "was_corrected": was_corrected,
             "items": resolved_lines,
@@ -948,7 +1072,7 @@ class TindaWiseEngine:
         with self._connect() as conn:
             rows = conn.execute(
                 """
-                SELECT d.debtor_id, d.debtor_name, d.contact_note, d.running_balance, d.updated_at,
+                SELECT d.debtor_id, d.debtor_name, d.trust_tag, d.contact_note, d.running_balance, d.updated_at,
                        COUNT(e.entry_id) AS entry_count,
                        MAX(e.due_date_raw) AS latest_due_raw
                 FROM debtors d
@@ -957,16 +1081,94 @@ class TindaWiseEngine:
                 ORDER BY CAST(d.running_balance AS REAL) DESC, d.updated_at DESC;
                 """
             ).fetchall()
-            return [dict(r) for r in rows]
+            result = []
+            for r in rows:
+                d_dict = dict(r)
+                recent_lines = conn.execute(
+                    """
+                    SELECT l.item_name, l.quantity, l.subtotal, e.created_at
+                    FROM utang_line_items l
+                    JOIN utang_entries e ON l.entry_id = e.entry_id
+                    WHERE e.debtor_id = ?
+                    ORDER BY e.entry_id DESC, l.line_id ASC
+                    LIMIT 4;
+                    """,
+                    (d_dict["debtor_id"],),
+                ).fetchall()
+                d_dict["recent_items"] = [
+                    f"{str(Decimal(ln['quantity']).normalize())}x {ln['item_name']} (₱{ln['subtotal']})"
+                    for ln in recent_lines
+                ]
+                result.append(d_dict)
+            return result
 
-    def draft_manual_reminder(self, debtor_id: int, store_name: str = "Tindahan ni Nanay") -> Dict[str, Any]:
+    def get_debtor_history(self, debtor_id: int) -> Dict[str, Any]:
         """
-        Generates a polite Tagalog reminder text for the store owner to copy or open in their
-        native SMS/Messenger app manually. Never triggers automated third-party SMS gateways.
+        Returns complete itemized utang entries and payment logs for a specific debtor.
+        Supports Ate Mina's face-to-face ('walk-by') verification when customers forget what or when they borrowed.
         """
         with self._connect() as conn:
             d_row = conn.execute(
-                "SELECT debtor_id, debtor_name, contact_note, running_balance FROM debtors WHERE debtor_id = ?;",
+                """
+                SELECT debtor_id, debtor_name, trust_tag, contact_note, running_balance, created_at, updated_at
+                FROM debtors WHERE debtor_id = ?;
+                """,
+                (debtor_id,),
+            ).fetchone()
+            if d_row is None:
+                raise ValueError(f"Debtor ID {debtor_id} not found.")
+
+            entry_rows = conn.execute(
+                """
+                SELECT entry_id, source_mode, raw_transcript, due_date_raw, due_date_iso,
+                       total_amount, was_corrected, created_at
+                FROM utang_entries
+                WHERE debtor_id = ?
+                ORDER BY entry_id DESC;
+                """,
+                (debtor_id,),
+            ).fetchall()
+
+            entries = []
+            for er in entry_rows:
+                e_dict = dict(er)
+                line_rows = conn.execute(
+                    """
+                    SELECT line_id, sku_id, item_name, quantity, unit, unit_price, subtotal
+                    FROM utang_line_items
+                    WHERE entry_id = ?
+                    ORDER BY line_id ASC;
+                    """,
+                    (e_dict["entry_id"],),
+                ).fetchall()
+                e_dict["items"] = [dict(lr) for lr in line_rows]
+                entries.append(e_dict)
+
+            pay_rows = conn.execute(
+                """
+                SELECT payment_id, amount_paid, note, created_at
+                FROM payment_logs
+                WHERE debtor_id = ?
+                ORDER BY payment_id DESC;
+                """,
+                (debtor_id,),
+            ).fetchall()
+
+        return {
+            "debtor": dict(d_row),
+            "entries": entries,
+            "payments": [dict(pr) for pr in pay_rows],
+        }
+
+    def draft_manual_reminder(self, debtor_id: int, store_name: str = "Tindahan ni Nanay") -> Dict[str, Any]:
+        """
+        Generates both a face-to-face spoken reminder guide (Ate Mina's primary workflow)
+        and a polite Tagalog SMS/Messenger draft for manual owner sending.
+        Never triggers automated third-party SMS gateways.
+        """
+        with self._connect() as conn:
+            d_row = conn.execute(
+                "SELECT debtor_id, debtor_name, trust_tag, contact_note, running_balance FROM debtors WHERE debtor_id = ?;",
                 (debtor_id,),
             ).fetchone()
             if d_row is None:
@@ -974,7 +1176,7 @@ class TindaWiseEngine:
 
             lines = conn.execute(
                 """
-                SELECT l.item_name, l.quantity, l.unit, l.subtotal, e.due_date_raw
+                SELECT l.item_name, l.quantity, l.unit, l.subtotal, e.due_date_raw, e.created_at
                 FROM utang_line_items l
                 JOIN utang_entries e ON l.entry_id = e.entry_id
                 WHERE e.debtor_id = ?
@@ -986,14 +1188,23 @@ class TindaWiseEngine:
 
         item_Parts = []
         latest_due = ""
+        latest_date = ""
         for ln in lines:
             qty_clean = str(Decimal(ln["quantity"]).normalize())
             item_Parts.append(f"{qty_clean}x {ln['item_name']} (PHP {ln['subtotal']})")
             if not latest_due and ln["due_date_raw"]:
                 latest_due = ln["due_date_raw"]
+            if not latest_date and ln["created_at"]:
+                latest_date = ln["created_at"][:10]
 
         items_summary = ", ".join(item_Parts) if item_Parts else "mga nakuha sa tindahan"
         due_clause = f" ({latest_due})" if latest_due and "walang" not in latest_due.lower() else ""
+        date_clause = f" noong {latest_date}" if latest_date else ""
+
+        face_to_face_script = (
+            f"\"{d_row['debtor_name']}, paalala lang po sa lista ninyo dito sa tindahan{date_clause}: "
+            f"{items_summary}. Bali PHP {d_row['running_balance']} po lahat pag nakaluwag. Salamat!\""
+        )
 
         message_text = (
             f"Magandang araw po {d_row['debtor_name']}! Paalala lang po mula sa {store_name} "
@@ -1009,9 +1220,12 @@ class TindaWiseEngine:
         return {
             "debtor_id": debtor_id,
             "debtor_name": d_row["debtor_name"],
+            "trust_tag": d_row["trust_tag"] or "Suki",
             "running_balance": d_row["running_balance"],
+            "face_to_face_script": face_to_face_script,
             "message_text": message_text,
             "sms_uri": sms_uri,
             "delivery_mode": "manual_owner_send_only",
-            "privacy_note": "No automated SMS sent. Owner copies or opens native SMS/Messenger app directly.",
+            "privacy_note": "No automated SMS sent. Owner reminds face-to-face or opens native SMS/Messenger app directly.",
         }
+

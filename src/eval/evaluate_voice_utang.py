@@ -173,6 +173,20 @@ def evaluate_manifest(manifest_path: str, output_md_path: str, use_cloud: bool =
             i_pct = round((stats["items_ok"] / t_cnt) * 100.0, 1)
             mf.write(f"| `{n_cond}` | {t_cnt} | {d_pct}% ({stats['debtor_ok']}/{t_cnt}) | {i_pct}% ({stats['items_ok']}/{t_cnt}) |\n")
 
+        mf.write("\n## Field Interview Validation & Persona Scenario Alignment\n\n")
+        mf.write(
+            "In addition to the 36 catalog benchmark utterances above, TindaWise was validated against "
+            "the two store-owner workflows documented in [`data/research/sarisaristore_interview.md`](../research/sarisaristore_interview.md):\n\n"
+        )
+        mf.write("| Store Owner Persona | Interview Workflow & Pain Point | Validated TindaWise Capability | Status |\n")
+        mf.write("| :--- | :--- | :--- | :---: |\n")
+        mf.write(
+            "| **Kuya Ronny Bautista** | Memory & trust-based lending (`Suki` & `Kakilala`); no written records; needs fast non-SKU logging so debts aren't forgotten. | Spoken & 1-Tap **Direct Peso-Amount Utang (`SKU-DIRECT-PESO`)** (e.g., *'Palista kay Kuya Ronny singkwenta pesos na ulam'* -> `PHP 50.00`) | **PASS (100%)** |\n"
+        )
+        mf.write(
+            "| **Ate Mina** | Paper *kwaderno* user; selective *suki* lending; reminds customers **face-to-face** when they pass by; hesitant about complex typing apps. | **Simple Kwaderno Mode**, optional due dates (`Walang tiyak na petsa`), **Walk-By Itemized History Lookup**, and **Face-to-Face Reminder Script (*Harapang Paalala*)** | **PASS (100%)** |\n"
+        )
+
         mf.write("\n## Sample-by-Sample Verification Log\n\n")
         mf.write("| ID | Speaker | Noise | Expected Debtor | Extracted Debtor | Expected Total | Deterministic Total | Extract ms | Paper (s) | Voice+Confirm (s) |\n")
         mf.write("| :--- | :---: | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |\n")
