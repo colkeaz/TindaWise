@@ -1,0 +1,41 @@
+{
+  "slides": 9,
+  "script_words": 258,
+  "scheduled_seconds": 120,
+  "timing_windows": [
+    "0:00-0:08",
+    "0:08-0:24",
+    "0:24-0:46",
+    "0:46-1:04",
+    "1:04-1:17",
+    "1:17-1:33",
+    "1:33-1:46",
+    "1:46-1:54",
+    "1:54-2:00"
+  ],
+  "pdf_text_matches_powerpoint": true,
+  "speaker_notes_per_slide": true,
+  "shape_bounds": "pass",
+  "demo_total_php": 58,
+  "direct_peso_php": 50,
+  "manifest_samples": 36,
+  "matching_accuracy_pct": 94.4,
+  "timing_reduction_pct": 73.4,
+  "paper_mean_sec": 25.46,
+  "voice_mean_sec": 6.76,
+  "interviews_used": 2,
+  "interviews_excluded": 1,
+  "store_count_source": "PIA/DTI, 2024: >1.3 million sari-sari stores nationally",
+  "starting_segment": "Batangas",
+  "qr_code": "none - public repository link returned 404",
+  "apk_signed": true,
+  "claim_boundaries": [
+    "no 100% accuracy claim",
+    "no certified RA 10173 compliance claim",
+    "no offline voice claim",
+    "reminders are template drafts sent by the owner",
+    "screenshots use fictional data"
+  ],
+  "visual_review": "All nine slides rendered and inspected; green palette #14532D preserved.",
+  "caveat": "Benchmarks use stored Taglish transcripts and supplied timing data, not field use. Adoption and repayment are unmeasured."
+}

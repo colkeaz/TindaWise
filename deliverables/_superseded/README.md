@@ -1,0 +1,1 @@
+﻿Superseded drafts from an earlier pass. The current deliverables are TindaWise_Pitch_Deck_Revised.pptx, TindaWise_Pitch_Deck_Revised.pdf, TindaWise_Speaker_Notes_Revised.md, built by build_deck_revised.py.
