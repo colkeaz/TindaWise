@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>TindaWise — Voice-to-Lista Utang Copilot</title>
+  <style>
+    :root {
+      --bg: #f6f4f0;
+      --surface: #ffffff;
+      --surface-alt: #f0ece3;
+      --ink: #1b2430;
+      --ink-muted: #596573;
+      --primary: #14532d;
+      --primary-hover: #166534;
+      --accent: #b45309;
+      --accent-hover: #92400e;
+      --danger: #b91c1c;
+      --border: #dcd6c8;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.45;
+      padding-bottom: 84px;
+    }
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 38px 16px 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+    .brand h1 { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em; }
+    .brand p { font-size: 0.74rem; opacity: 0.92; }
+    .header-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .pill-btn {
+      background: rgba(255,255,255,0.16);
+      border: 1px solid rgba(255,255,255,0.32);
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .container {
+      max-width: 960px;
+      margin: 12px auto;
+      padding: 0 12px;
+    }
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .tab-btn {
+      padding: 10px 8px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--ink);
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-align: center;
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .grid-two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 768px) {
+      .grid-two { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      gap: 6px;
+    }
+    .card-title { font-size: 0.96rem; font-weight: 700; }
+    .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--surface-alt);
+      color: var(--ink-muted);
+      white-space: nowrap;
+    }
+    .badge.warn { background: #fef3c7; color: #92400e; }
+    .badge.ok { background: #dcfce7; color: #166534; }
+    .badge.ai { background: #e0e7ff; color: #3730a3; }
+    .ptt-btn {
+      width: 100%;
+      padding: 15px 12px;
+      border-radius: var(--radius);
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 4px rgba(20,83,45,0.22);
+    }
+    .ptt-btn.recording { background: var(--danger); animation: pulse 1s infinite; }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.75; }
+      100% { opacity: 1; }
+    }
+    textarea, input, select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      color: var(--ink);
+      background: #fff;
+    }
+    label {
+      display: block;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--ink-muted);
+      margin-bottom: 4px;
+      margin-top: 8px;
+    }
+    .sample-chips, .fallback-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .chip {
+      padding: 7px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface-alt);
+      font-size: 0.78rem;
+      cursor: pointer;
+      color: var(--ink);
+      font-weight: 600;
+    }
+    .chip:active { background: #dfd8c4; }
+    .btn {
+      padding: 9px 12px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-accent { background: var(--accent); color: #fff; }
+    .btn-outline { background: #fff; border-color: var(--border); color: var(--ink); }
+    .btn-danger { background: #fee2e2; color: var(--danger); }
+    .line-item-row {
+      display: grid;
+      grid-template-columns: 1.8fr 1.1fr 0.8fr auto;
+      gap: 6px;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--border);
+    }
+    @media (max-width: 480px) {
+      .line-item-row {
+        grid-template-columns: 1fr auto;
+        row-gap: 6px;
+      }
+    }
+    .qty-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .qty-btn {
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--border);
+      background: var(--surface-alt);
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .total-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: #dcfce7;
+      border: 1px solid #86efac;
+      border-radius: 8px;
+      margin: 12px 0;
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: #14532d;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--ink-muted); font-size: 0.72rem; text-transform: uppercase; }
+    .hidden { display: none !important; }
+    .notice-box {
+      padding: 9px 11px;
+      background: #fef9c3;
+      border: 1px solid #fde047;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      color: #713f12;
+      margin-bottom: 10px;
+    }
+    .sms-action-banner {
+      background: #ecfdf5;
+      border: 2px solid #10b981;
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-top: 12px;
+      box-shadow: 0 4px 6px rgba(16,185,129,0.12);
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
+    }
+    .modal-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      max-width: 520px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>TindaWise</h1>
+    <p>Voice Utang Copilot • Deterministic Math • Direct SMS</p>
+  </div>
+  <div class="header-actions">
+    <button class="pill-btn" onclick="openAiModal()">
+      🤖 AI Mode: <span id="headerAiBadge">Taglish NLP</span>
+    </button>
+    <button class="pill-btn" onclick="togglePrivacyModal(true)">
+      RA 10173
+    </button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab-btn active" id="tabBtnCounter" onclick="switchTab('counter')">1. Counter</button>
+    <button class="tab-btn" id="tabBtnLedger" onclick="switchTab('ledger')">2. Utang Lista</button>
+    <button class="tab-btn" id="tabBtnPrices" onclick="switchTab('prices')">3. Presyo List</button>
+  </div>
+
+  <!-- TAB 1: COUNTER CAPTURE & OWNER CONFIRMATION -->
+  <div id="tab-counter" class="grid-two">
+    <div>
+      <!-- Voice Capture Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Step 1A: Spoken Taglish Utang Entry</span>
+          <span class="badge ok" id="micStatusBadge">Push-to-Talk Ready</span>
+        </div>
+
+        <button class="ptt-btn" id="pttBtn" onclick="toggleVoiceCapture()">
+          <span id="pttLabel">Tap to Speak Taglish Utang</span>
+        </button>
+
+        <label for="utteranceInput">Spoken Transcript (or edit/type):</label>
+        <textarea id="utteranceInput" rows="2" placeholder="Halimbawa: Palista kay Aling Nena dalawang Lucky Me canton saka isang sardinas, sa Sabado bayad."></textarea>
+
+        <div style="display:flex; gap:6px; margin-top:8px;">
+          <button class="btn btn-primary" style="flex:1;" onclick="triggerExtraction(false)">
+            Extract &amp; Compute Line Items
+          </button>
+          <button class="btn btn-outline" onclick="triggerExtraction(true)" title="Simulates a noisy counter mishear to demo live owner correction">
+            Demo Noisy Mishear
+          </button>
+        </div>
+
+        <label style="margin-top:10px;">Quick Test Utterances (Tap to Load &amp; Compute):</label>
+        <div class="sample-chips">
+          <button class="chip" onclick="loadSample(0)">Aling Nena: 2 Canton + 1 Sardinas (Sabado)</button>
+          <button class="chip" onclick="loadSample(1)">Kuya Jojo: 1/2 kg Bigas + 2 Itlog (Bukas)</button>
+          <button class="chip" onclick="loadSample(2)">Ate Marites: 1 Coke Litro + 1 Corned Beef (Kinsenas)</button>
+          <button class="chip" onclick="loadSample(3)">Mang Kanor: 1/4 kg Asukal + 2 Kopiko (Biyernes)</button>
+          <button class="chip" onclick="loadSample(4)">Juan: 3 Itlog + 1 Mantika (Walang Honorific)</button>
+        </div>
+      </div>
+
+      <!-- Tap Fallback Card -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Step 1B: Tap Fallback (If Voice Fails)</span>
+          <span class="badge warn">Zero-Voice Backup</span>
+        </div>
+        <p style="font-size:0.78rem; color:var(--ink-muted); margin-bottom:6px;">
+          Too noisy at the counter? Tap a customer chip and item tiles below to build the entry without voice:
+        </p>
+        <label>1. Tap Customer:</label>
+        <div class="fallback-chips" id="fallbackDebtors">
+          <button class="chip" onclick="setFallbackDebtor('Aling Nena', '09171234567')">Aling Nena</button>
+          <button class="chip" onclick="setFallbackDebtor('Kuya Jojo', '09189876543')">Kuya Jojo</button>
+          <button class="chip" onclick="setFallbackDebtor('Ate Marites', '09205551234')">Ate Marites</button>
+          <button class="chip" onclick="setFallbackDebtor('Mang Kanor', '')">Mang Kanor</button>
+        </div>
+        <label>2. Tap Item to Add (Prices from Owner Price List):</label>
+        <div class="fallback-chips" id="fallbackItems"></div>
+      </div>
+    </div>
+
+    <!-- Step 2: Owner Confirmation & Correction Card -->
+    <div>
+      <div class="card" id="step2Card">
+        <div class="card-header">
+          <span class="card-title">Step 2: Owner Confirmation &amp; Computation</span>
+          <span class="badge ai" id="timingBadge">Ready</span>
+        </div>
+
+        <div class="notice-box" id="safetyBanner">
+          <strong>AI Safety &amp; Math Guarantee:</strong> AI extracts names, items, and quantities from spoken Taglish. Unit prices come strictly from your Owner Price List. The balance updates only after you tap <em>Confirm &amp; Update Lista</em>.
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1.1fr 1fr; gap:8px;">
+          <div>
+            <label for="confirmDebtor">Customer / Debtor Name:</label>
+            <input type="text" id="confirmDebtor" placeholder="e.g., Aling Nena" oninput="onDebtorNameChanged()" />
+          </div>
+          <div>
+            <label for="confirmPhone">Customer Mobile # (For SMS):</label>
+            <input type="tel" id="confirmPhone" placeholder="0917xxxxxxx" oninput="markEdited()" />
+          </div>
+        </div>
+
+        <div>
+          <label for="confirmDue">Promised Due Date:</label>
+          <input type="text" id="confirmDue" placeholder="e.g., Sa Sabado" oninput="markEdited()" />
+        </div>
+
+        <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+          <label style="margin:0;">Computed Line Items (Owner Can Edit):</label>
+          <button class="btn btn-outline" style="padding:4px 8px; font-size:0.74rem;" onclick="addBlankLine()">+ Add Item Row</button>
+        </div>
+
+        <div id="confirmItemsList" style="margin-top:6px;"></div>
+
+        <div class="total-bar" id="totalBarEl">
+          <span>Deterministic Total (Plain Code):</span>
+          <span id="confirmTotalDisplay" style="font-size:1.18rem;">PHP 0.00</span>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-primary" style="flex:1; padding:12px; font-size:0.95rem;" onclick="confirmAndCommit()">
+            Confirm &amp; Update Lista
+          </button>
+          <button class="btn btn-outline" onclick="clearConfirmation()">Clear</button>
+        </div>
+
+        <!-- DIRECT COUNTER SMS BANNER (Appears right after Confirmation) -->
+        <div id="counterSmsBanner" class="sms-action-banner hidden">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:#065f46; font-size:0.95rem;">✅ Naitala sa Lista! (Saved)</strong>
+            <span id="savedBalancePill" style="background:#bbf7d0; color:#14532d; padding:2px 8px; border-radius:4px; font-weight:800; font-size:0.75rem;">Balance: PHP 0.00</span>
+          </div>
+          <p style="font-size:0.82rem; margin:6px 0; color:#1f2937;">
+            Entry for <strong id="savedDebtorName">Customer</strong>. Send instant confirmation text:
+          </p>
+          <div style="background:#fff; border:1px solid #a7f3d0; border-radius:6px; padding:8px; font-size:0.78rem; color:#374151; margin-bottom:8px;" id="savedMessagePreview">
+            ...
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            <button class="btn btn-primary" style="flex:1; min-width:180px; padding:10px;" onclick="sendCounterSmsDirect()">
+              📱 Send SMS to Customer Now
+            </button>
+            <button class="btn btn-outline" style="font-size:0.8rem;" onclick="shareCounterSmsDirect()">
+              Share (Messenger/Viber)
+            </button>
+            <button class="btn btn-outline" style="font-size:0.8rem;" onclick="copyCounterSmsDirect()">
+              Copy Text
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: UTANG LEDGER & MANUAL REMINDERS -->
+  <div id="tab-ledger" class="hidden">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Customer Utang Balances (Deterministic Ledger)</span>
+        <span class="badge ok" id="ledgerCountBadge">0 Customers</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Phone</th>
+              <th>Due</th>
+              <th>Balance</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="ledgerTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Manual Reminder Draft Card -->
+    <div class="card hidden" id="reminderModalCard">
+      <div class="card-header">
+        <span class="card-title">Drafted Polite Tagalog Reminder (Manual Send)</span>
+        <span class="badge warn">Owner Sends Manually</span>
+      </div>
+      <p style="font-size:0.78rem; color:var(--ink-muted); margin-bottom:8px;">
+        Review or edit the message below, then copy or open your native SMS / Messenger app:
+      </p>
+      <textarea id="reminderTextBox" rows="3"></textarea>
+      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">
+        <button class="btn btn-primary" onclick="copyReminderText()">Copy Text</button>
+        <button class="btn btn-accent" onclick="openNativeSmsFromLedger()">Open in SMS App</button>
+        <button class="btn btn-outline" onclick="shareViaNativeSheet()">Share (Messenger/Viber)</button>
+        <button class="btn btn-outline" onclick="document.getElementById('reminderModalCard').classList.add('hidden')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: OWNER-EDITABLE PRICE LIST -->
+  <div id="tab-prices" class="hidden">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Owner-Editable Store Price List (Presyo)</span>
+        <span class="badge ok">Model Never Guesses Prices</span>
+      </div>
+      <p style="font-size:0.8rem; color:var(--ink-muted); margin-bottom:10px;">
+        Every voice or tap entry looks up unit prices strictly from this list. Edit any price or add a new item below:
+      </p>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; background:var(--surface-alt); padding:10px; border-radius:8px; margin-bottom:12px;">
+        <div>
+          <label style="margin-top:0;">Item Name</label>
+          <input type="text" id="newName" placeholder="e.g., Tinapa (1 Pack)" />
+        </div>
+        <div>
+          <label style="margin-top:0;">Unit Price (PHP)</label>
+          <input type="number" step="0.50" id="newPrice" placeholder="35.00" />
+        </div>
+        <div>
+          <label style="margin-top:2px;">Unit (pc/pack/kg/can)</label>
+          <input type="text" id="newUnit" value="pc" />
+        </div>
+        <div>
+          <label style="margin-top:2px;">Spoken Aliases (comma-separated)</label>
+          <input type="text" id="newAliases" placeholder="tinapa, isda" />
+        </div>
+        <div style="grid-column: span 2; display:flex; gap:8px; margin-top:4px;">
+          <button class="btn btn-primary" style="flex:1;" onclick="saveNewPriceItem()">+ Add Item to Price List</button>
+          <button class="btn btn-outline" onclick="resetDemoState()">Reset Demo Defaults</button>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Store Item Name</th>
+              <th>Unit</th>
+              <th>Spoken Aliases</th>
+              <th>Owner Price (PHP)</th>
+            </tr>
+          </thead>
+          <tbody id="priceTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI ENGINE & ARCHITECTURE MODAL -->
+<div id="aiModal" class="modal-backdrop hidden" onclick="closeAiModal()">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h3 style="color:var(--primary);">🤖 TindaWise AI Architecture &amp; Settings</h3>
+      <button class="btn btn-outline" style="padding:2px 8px;" onclick="closeAiModal()">×</button>
+    </div>
+
+    <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:10px; margin-bottom:12px; font-size:0.8rem; color:#14532d; line-height:1.45;">
+      <strong>Where is the AI in TindaWise?</strong>
+      <ol style="padding-left:18px; margin-top:4px;">
+        <li><strong>Layer 1 (Perception):</strong> Speech-to-Text acoustic modeling (Taglish voice capture via Android RecognizerIntent).</li>
+        <li><strong>Layer 2 (Semantic Extraction — Core AI):</strong> Natural language entity extraction (debtor, due date, fractional quantities e.g. <em>kalahati = 0.5</em>, and fuzzy product SKU mapping).</li>
+        <li><strong>Financial Safety Guardrail:</strong> AI NEVER guesses money. Unit prices come from your Owner Price List and are summed in plain deterministic code.</li>
+        <li><strong>Layer 3 (Generative Social Reminder):</strong> Contextual polite Tagalog reminder drafting for manual sending.</li>
+      </ol>
+    </div>
+
+    <label style="font-weight:700;">Select Extraction Engine:</label>
+    <div style="display:flex; flex-direction:column; gap:6px; margin-top:4px; font-size:0.84rem;">
+      <label style="display:flex; align-items:center; gap:8px; font-size:0.84rem; font-weight:normal; margin:0;">
+        <input type="radio" name="aiEngineMode" value="local" checked style="width:auto;" onchange="onAiEngineChanged('local')" />
+        <strong>On-Device Taglish NLP</strong> (0 ms, 100% Offline, Privacy-First)
+      </label>
+      <label style="display:flex; align-items:center; gap:8px; font-size:0.84rem; font-weight:normal; margin:0;">
+        <input type="radio" name="aiEngineMode" value="gemini" style="width:auto;" onchange="onAiEngineChanged('gemini')" />
+        <strong>Google Gemini 2.5 Flash</strong> (Cloud LLM Structured JSON Output)
+      </label>
+    </div>
+
+    <div id="geminiKeySection" class="hidden" style="margin-top:10px;">
+      <label for="geminiApiKeyInput">Gemini API Key:</label>
+      <input type="password" id="geminiApiKeyInput" placeholder="AIzaSy..." onchange="saveGeminiKey(this.value)" />
+      <span style="font-size:0.72rem; color:var(--ink-muted);">Key is saved only locally in your browser storage. If offline or invalid, auto-falls back to on-device NLP.</span>
+    </div>
+
+    <button class="btn btn-primary" style="width:100%; margin-top:14px;" onclick="closeAiModal()">Done</button>
+  </div>
+</div>
+
+<!-- RA 10173 Privacy Modal -->
+<div id="privacyModal" class="modal-backdrop hidden" onclick="togglePrivacyModal(false)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <h3 style="margin-bottom:8px; color:var(--primary);">RA 10173 Data Privacy Compliance</h3>
+    <ul style="font-size:0.84rem; padding-left:18px; line-height:1.55; color:var(--ink);">
+      <li><strong>Push-to-Talk &amp; 0-Day Audio Retention:</strong> Audio is captured only when you tap Speak and is discarded immediately after speech-to-text transcription. No voice recordings are saved to storage.</li>
+      <li><strong>Local-First Ledger Storage:</strong> Customer nicknames and balances are saved locally on your phone. No government IDs are collected.</li>
+      <li><strong>Deterministic Math:</strong> AI never sets prices or changes balances without your explicit confirmation.</li>
+      <li><strong>Manual SMS Sending:</strong> Reminders are drafted on your phone and sent manually by you via SMS or Messenger.</li>
+    </ul>
+    <button class="btn btn-primary" style="width:100%; margin-top:14px;" onclick="togglePrivacyModal(false)">Got It</button>
+  </div>
+</div>
+
+<script>
+  const SAMPLES = [
+    "Palista kay Aling Nena dalawang Lucky Me canton saka isang sardinas, sa Sabado bayad.",
+    "Pautang daw si Kuya Jojo ng kalahating kilong bigas at dalawang itlog, bukas babayaran.",
+    "Kay Ate Marites isang Coke litro saka isang corned beef, bayaran sa kinsenas.",
+    "Lista muna kay Mang Kanor isang kapat na asukal at dalawang Kopiko black, sa Biyernes ang bayad.",
+    "Pautang kay Juan tatlong itlog saka isang mantika tingi, bukas bayad."
+  ];
+
+  const DEFAULT_PRICES = [
+    { sku_id: "SKU-CANTON", canonical_name: "Lucky Me Pancit Canton", unit: "pack", unit_price: 16.00, aliases: ["pancit canton", "lucky me canton", "canton", "pansit canton"] },
+    { sku_id: "SKU-SARDINAS", canonical_name: "Sardinas (Mega / 555 155g)", unit: "can", unit_price: 26.00, aliases: ["sardinas", "mega sardinas", "555 sardinas", "isang lata ng sardinas", "sardines"] },
+    { sku_id: "SKU-CORNED-BEEF", canonical_name: "Argentina Corned Beef (150g)", unit: "can", unit_price: 38.00, aliases: ["corned beef", "argentina", "kornbip"] },
+    { sku_id: "SKU-BIGAS-KG", canonical_name: "Well-Milled Bigas (Rice)", unit: "kg", unit_price: 54.00, aliases: ["bigas", "kilong bigas", "rice", "kilo ng bigas"] },
+    { sku_id: "SKU-ASUKAL-KG", canonical_name: "Washed Sugar (Asukal)", unit: "kg", unit_price: 88.00, aliases: ["asukal", "sugar", "kilong asukal"] },
+    { sku_id: "SKU-ITLOG", canonical_name: "Itlog (Medium Egg)", unit: "pc", unit_price: 9.00, aliases: ["itlog", "egg", "pirasong itlog", "mga itlog"] },
+    { sku_id: "SKU-MANTIKA-TINGI", canonical_name: "Mantika Tingi (Cooking Oil)", unit: "pack", unit_price: 20.00, aliases: ["mantika", "mantika tingi", "cooking oil", "mantikang tingi"] },
+    { sku_id: "SKU-COKE-MISMO", canonical_name: "Coke / Sprite Mismo (290ml)", unit: "bottle", unit_price: 22.00, aliases: ["coke mismo", "mismo", "royal mismo", "sprite mismo"] },
+    { sku_id: "SKU-COKE-LITRO", canonical_name: "Coke 1 Litro / Kasalo", unit: "bottle", unit_price: 45.00, aliases: ["coke litro", "coke 1l", "isang litrong coke", "kasalo"] },
+    { sku_id: "SKU-KOPIKO", canonical_name: "Kopiko Black / Brown Twin Pack", unit: "sachet", unit_price: 15.00, aliases: ["kopiko", "kopiko black", "kape", "kopiko brown", "twin pack"] }
+  ];
+
+  const DEFAULT_DEBTORS = [
+    {
+      debtor_id: 1,
+      debtor_name: "Aling Nena",
+      phone: "09171234567",
+      entries: 1,
+      latest_due_raw: "Sa Sabado",
+      running_balance: 58.00,
+      items_log: ["2x Lucky Me Pancit Canton (PHP 32.00)", "1x Sardinas (PHP 26.00)"]
+    },
+    {
+      debtor_id: 2,
+      debtor_name: "Kuya Jojo",
+      phone: "09189876543",
+      entries: 1,
+      latest_due_raw: "Bukas",
+      running_balance: 45.00,
+      items_log: ["0.5x Well-Milled Bigas (PHP 27.00)", "2x Itlog (PHP 18.00)"]
+    }
+  ];
+
+  let priceCatalog = loadFromStorage("tindawise_prices_v2", DEFAULT_PRICES);
+  let ledgerDebtors = loadFromStorage("tindawise_debtors_v2", DEFAULT_DEBTORS);
+  let aiEngineMode = localStorage.getItem("tindawise_ai_mode") || "local";
+  let geminiApiKey = localStorage.getItem("tindawise_gemini_key") || "";
+
+  let currentDraft = {
+    source_mode: "voice_confirmed",
+    raw_transcript: "",
+    debtor_name: "",
+    phone: "",
+    due_date_raw: "",
+    was_corrected: false,
+    items: []
+  };
+
+  let lastCommittedTransaction = null;
+
+  function loadFromStorage(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(fallback));
+    } catch (e) {
+      return JSON.parse(JSON.stringify(fallback));
+    }
+  }
+
+  function saveToStorage() {
+    try {
+      localStorage.setItem("tindawise_prices_v2", JSON.stringify(priceCatalog));
+      localStorage.setItem("tindawise_debtors_v2", JSON.stringify(ledgerDebtors));
+      localStorage.setItem("tindawise_ai_mode", aiEngineMode);
+    } catch (e) {}
+  }
+
+  function resetDemoState() {
+    priceCatalog = JSON.parse(JSON.stringify(DEFAULT_PRICES));
+    ledgerDebtors = JSON.parse(JSON.stringify(DEFAULT_DEBTORS));
+    saveToStorage();
+    renderFallbackButtons();
+    renderPriceTable();
+    renderLedgerTable();
+    loadSample(0);
+    showToast("Demo data reset to defaults.");
+  }
+
+  function showToast(msg) {
+    if (window.AndroidBridge && window.AndroidBridge.showToast) {
+      window.AndroidBridge.showToast(msg);
+    } else {
+      alert(msg);
+    }
+  }
+
+  function switchTab(tab) {
+    ["counter", "ledger", "prices"].forEach(t => {
+      document.getElementById("tab-" + t).classList.toggle("hidden", t !== tab);
+      document.getElementById("tabBtn" + t.charAt(0).toUpperCase() + t.slice(1)).classList.toggle("active", t === tab);
+    });
+    if (tab === "ledger") renderLedgerTable();
+    if (tab === "prices") renderPriceTable();
+  }
+
+  function renderFallbackButtons() {
+    const container = document.getElementById("fallbackItems");
+    container.innerHTML = "";
+    priceCatalog.forEach(item => {
+      const btn = document.createElement("button");
+      btn.className = "chip";
+      btn.textContent = `${item.canonical_name.split(" (")[0]} (₱${item.unit_price.toFixed(2)})`;
+      btn.onclick = () => addFallbackItem(item.sku_id);
+      container.appendChild(btn);
+    });
+  }
+
+  function setFallbackDebtor(name, phone) {
+    document.getElementById("confirmDebtor").value = name;
+    document.getElementById("confirmPhone").value = phone || "";
+    if (!document.getElementById("confirmDue").value) {
+      document.getElementById("confirmDue").value = "Sa Sabado";
+    }
+    currentDraft.source_mode = "tap_fallback";
+    document.getElementById("timingBadge").textContent = "Mode: Tap Fallback";
+  }
+
+  function onDebtorNameChanged() {
+    markEdited();
+    const name = document.getElementById("confirmDebtor").value.trim().toLowerCase();
+    const existing = ledgerDebtors.find(d => d.debtor_name.toLowerCase() === name);
+    if (existing && existing.phone && !document.getElementById("confirmPhone").value) {
+      document.getElementById("confirmPhone").value = existing.phone;
+    }
+  }
+
+  function addFallbackItem(skuId) {
+    currentDraft.source_mode = "tap_fallback";
+    const existing = currentDraft.items.find(i => i.sku_id === skuId);
+    if (existing) {
+      existing.quantity = +(existing.quantity + 1).toFixed(2);
+    } else {
+      currentDraft.items.push({ sku_id: skuId, quantity: 1 });
+    }
+    document.getElementById("timingBadge").textContent = "Mode: Tap Fallback";
+    renderConfirmationCard();
+    scrollConfirmationIntoView();
+  }
+
+  function loadSample(idx) {
+    document.getElementById("utteranceInput").value = SAMPLES[idx];
+    triggerExtraction(false);
+  }
+
+  // ===========================================================================
+  // RESILIENT ON-DEVICE TAGLISH NLP PARSER
+  // ===========================================================================
+  function extractTaglishUtang(text, simulateMishear) {
+    const t0 = performance.now();
+    const clean = text.trim();
+    const lower = clean.toLowerCase();
+
+    // 1. Debtor Extraction (With or without honorifics)
+    let debtor = "Suki";
+    const stopWords = new Set([
+      "ng", "mga", "isang", "dalawang", "tatlong", "apat", "limang", "anim", "pitong", "walong", "siyam", "sampung",
+      "isa", "dalawa", "tatlo", "apat", "lima", "anim", "pito", "walo", "siyam", "sampu",
+      "kalahating", "kalahati", "pautang", "utang", "palista", "lista", "saka", "at", "daw", "raw", "po", "muna", "pati", "tsaka",
+      "na", "sa", "kay", "si", "ni"
+    ]);
+
+    const honMatch = clean.match(/\b((?:Aling|Mang|Kuya|Ate|Nanay|Tatay|Pareng|Mareng|Tita|Tito|Boss|Kap)\s+[A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+)?)/i);
+    if (honMatch) {
+      const parts = honMatch[1].trim().split(/\s+/);
+      const cleaned = [parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase()];
+      for (let i = 1; i < parts.length; i++) {
+        if (stopWords.has(parts[i].toLowerCase())) break;
+        cleaned.push(parts[i].charAt(0).toUpperCase() + parts[i].slice(1).toLowerCase());
+      }
+      debtor = cleaned.join(" ");
+    } else {
+      const prepMatch = clean.match(/\b(?:kay|si|ni|para\s+kay)\s+([A-Za-zÀ-ÿ]+(?:\s+[A-Za-zÀ-ÿ]+)?)/i);
+      if (prepMatch) {
+        const words = prepMatch[1].trim().split(/\s+/);
+        const valid = [];
+        for (let i = 0; i < words.length; i++) {
+          if (stopWords.has(words[i].toLowerCase())) break;
+          valid.push(words[i].charAt(0).toUpperCase() + words[i].slice(1).toLowerCase());
+        }
+        if (valid.length > 0) {
+          debtor = valid.slice(0, 2).join(" ");
+        }
+      }
+    }
+
+    // 2. Due Date Extraction
+    let due = "Walang tiyak na petsa";
+    const dayMap = {
+      "sabado": "Sa Sabado", "lunes": "Sa Lunes", "martes": "Sa Martes",
+      "miyerkules": "Sa Miyerkules", "huwebes": "Sa Huwebes",
+      "biyernes": "Sa Biyernes", "linggo": "Sa Linggo",
+      "bukas": "Bukas", "kinsenas": "Sa Kinsenas (15th)",
+      "katapusan": "Sa Katapusan", "sahod": "Sa Araw ng Sahod", "sweldo": "Sa Araw ng Sweldo"
+    };
+    for (const [k, v] of Object.entries(dayMap)) {
+      if (lower.includes(k)) {
+        due = v;
+        break;
+      }
+    }
+
+    // 3. Fractional & Multi-Word Quantity Normalizer
+    const qtyTerms = [
+      { word: "isang kapat", val: 0.25 }, { word: "1/4", val: 0.25 }, { word: "quarter", val: 0.25 },
+      { word: "kalahating", val: 0.5 }, { word: "kalahati", val: 0.5 }, { word: "1/2", val: 0.5 }, { word: "half", val: 0.5 },
+      { word: "isang", val: 1 }, { word: "isa", val: 1 }, { word: "one", val: 1 },
+      { word: "dalawang", val: 2 }, { word: "dalawa", val: 2 }, { word: "two", val: 2 }, { word: "twin", val: 1 },
+      { word: "tatlong", val: 3 }, { word: "tatlo", val: 3 }, { word: "three", val: 3 },
+      { word: "apat na", val: 4 }, { word: "apat", val: 4 }, { word: "four", val: 4 },
+      { word: "limang", val: 5 }, { word: "lima", val: 5 }, { word: "five", val: 5 },
+      { word: "anim na", val: 6 }, { word: "anim", val: 6 }, { word: "six", val: 6 },
+      { word: "pitong", val: 7 }, { word: "pito", val: 7 },
+      { word: "walong", val: 8 }, { word: "walo", val: 8 },
+      { word: "siyam na", val: 9 }, { word: "siyam", val: 9 },
+      { word: "sampung", val: 10 }, { word: "sampu", val: 10 }
+    ];
+
+    // Build sorted alias dictionary (longest alias first to prevent premature short-match)
+    const aliasEntries = [];
+    priceCatalog.forEach(cat => {
+      cat.aliases.forEach(al => {
+        aliasEntries.push({ alias: al.toLowerCase(), sku_id: cat.sku_id });
+      });
+    });
+    aliasEntries.sort((a, b) => b.alias.length - a.alias.length);
+
+    const items = [];
+    const matchedSpans = [];
+
+    aliasEntries.forEach(entry => {
+      const escaped = entry.alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp("\\b" + escaped + "\\b", "ig");
+      let match;
+      while ((match = regex.exec(lower)) !== null) {
+        const start = match.index;
+        const end = start + match[0].length;
+        const overlaps = matchedSpans.some(s => !(end <= s.start || start >= s.end));
+        if (!overlaps) {
+          matchedSpans.push({ start, end });
+          const prefix = lower.slice(Math.max(0, start - 36), start);
+          const clause = prefix.split(/\b(?:saka|at|tapos|tsaka|pati|plus)\b|,/i).pop().trim();
+
+          let qty = 1;
+          let foundQty = false;
+          for (const q of qtyTerms) {
+            const qEsc = q.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            if (new RegExp("(?:^|\\s)" + qEsc + "(?:\\s|$)", "i").test(clause)) {
+              qty = q.val;
+              foundQty = true;
+              break;
+            }
+          }
+          if (!foundQty) {
+            const numM = clause.match(/(\d+(?:\.\d+)?)\s*(?:na|piraso|pirasong|lata|latang|pack|sachet|kilo|kilong|bote)?\s*$/i);
+            if (numM) {
+              qty = parseFloat(numM[1]) || 1;
+            }
+          }
+          if (simulateMishear && items.length === 0) {
+            qty = qty + 1; // Simulated noisy slip for demo
+          }
+          items.push({ sku_id: entry.sku_id, quantity: qty });
+        }
+      }
+    });
+
+    // Fallback if no specific catalog alias matched:
+    if (items.length === 0) {
+      items.push({ sku_id: priceCatalog[0].sku_id, quantity: 1 });
+    }
+
+    const elapsed = (performance.now() - t0).toFixed(1);
+    return { debtor, due, items, elapsed, engine: "Taglish NLP (On-Device)" };
+  }
+
+  // ===========================================================================
+  // OPTIONAL CLOUD GEMINI 2.5 FLASH EXTRACTION
+  // ===========================================================================
+  async function extractViaGemini(text) {
+    if (!geminiApiKey) {
+      throw new Error("No Gemini API key set.");
+    }
+    const t0 = performance.now();
+    const skuSummary = priceCatalog.map(c => ({ sku_id: c.sku_id, name: c.canonical_name, aliases: c.aliases }));
+    const prompt = `Extract the sari-sari store credit (utang) from this Taglish utterance.
+Do NOT guess or output prices. Only extract debtor_name, due_date_raw, and items array with sku_id and quantity (decimal).
+SKU Catalog: ${JSON.stringify(skuSummary)}
+Utterance: "${text}"`;
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+    const payload = {
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        temperature: 0.0
+      }
+    };
+
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!resp.ok) throw new Error("Gemini HTTP " + resp.status);
+    const data = await resp.json();
+    const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+    const elapsed = (performance.now() - t0).toFixed(1);
+
+    const items = (parsed.items || []).map(it => ({
+      sku_id: it.sku_id || priceCatalog[0].sku_id,
+      quantity: parseFloat(it.quantity) || 1
+    }));
+
+    return {
+      debtor: parsed.debtor_name || "Suki",
+      due: parsed.due_date_raw || "Walang tiyak na petsa",
+      items: items.length ? items : [{ sku_id: priceCatalog[0].sku_id, quantity: 1 }],
+      elapsed: elapsed,
+      engine: "Gemini 2.5 Flash (Cloud)"
+    };
+  }
+
+  async function triggerExtraction(simulateMishear) {
+    const text = document.getElementById("utteranceInput").value.trim();
+    if (!text) {
+      showToast("Please speak or type an utang sentence first.");
+      return;
+    }
+
+    document.getElementById("timingBadge").textContent = "AI Extracting...";
+    let res;
+
+    if (aiEngineMode === "gemini" && geminiApiKey && !simulateMishear) {
+      try {
+        res = await extractViaGemini(text);
+      } catch (e) {
+        showToast("Gemini offline/error; falling back to On-Device NLP.");
+        res = extractTaglishUtang(text, simulateMishear);
+      }
+    } else {
+      res = extractTaglishUtang(text, simulateMishear);
+    }
+
+    // Auto-fill existing phone if this debtor was seen before
+    const existingDebtor = ledgerDebtors.find(d => d.debtor_name.toLowerCase() === res.debtor.toLowerCase());
+    const phone = existingDebtor && existingDebtor.phone ? existingDebtor.phone : "";
+
+    currentDraft = {
+      source_mode: "voice_confirmed",
+      raw_transcript: text,
+      debtor_name: res.debtor,
+      phone: phone,
+      due_date_raw: res.due,
+      was_corrected: false,
+      items: res.items
+    };
+
+    document.getElementById("confirmDebtor").value = res.debtor;
+    document.getElementById("confirmPhone").value = phone;
+    document.getElementById("confirmDue").value = res.due;
+
+    const badgeText = simulateMishear
+      ? `Noisy Demo (${res.elapsed} ms) — Correct Qty Below`
+      : `${res.engine} (${res.elapsed} ms)`;
+    document.getElementById("timingBadge").textContent = badgeText;
+
+    // Hide any previous confirmation banner
+    document.getElementById("counterSmsBanner").classList.add("hidden");
+
+    renderConfirmationCard();
+    scrollConfirmationIntoView();
+  }
+
+  function scrollConfirmationIntoView() {
+    const card = document.getElementById("step2Card");
+    if (card) {
+      card.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  function markEdited() {
+    currentDraft.was_corrected = true;
+  }
+
+  function renderConfirmationCard() {
+    const listEl = document.getElementById("confirmItemsList");
+    listEl.innerHTML = "";
+    let grandTotal = 0;
+
+    currentDraft.items.forEach((line, idx) => {
+      const cat = priceCatalog.find(c => c.sku_id === line.sku_id) || priceCatalog[0];
+      const sub = +(line.quantity * cat.unit_price).toFixed(2);
+      grandTotal += sub;
+
+      const row = document.createElement("div");
+      row.className = "line-item-row";
+
+      const sel = document.createElement("select");
+      priceCatalog.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.sku_id;
+        opt.textContent = `${c.canonical_name} (₱${c.unit_price.toFixed(2)}/${c.unit})`;
+        if (c.sku_id === line.sku_id) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.onchange = e => {
+        currentDraft.items[idx].sku_id = e.target.value;
+        currentDraft.was_corrected = true;
+        renderConfirmationCard();
+      };
+
+      const qtyDiv = document.createElement("div");
+      qtyDiv.className = "qty-ctrl";
+      qtyDiv.innerHTML = `
+        <button class="qty-btn" onclick="changeQty(${idx}, -0.5)">-</button>
+        <input type="number" step="0.25" value="${line.quantity}" style="width:58px; text-align:center;" onchange="setQty(${idx}, this.value)" />
+        <button class="qty-btn" onclick="changeQty(${idx}, 0.5)">+</button>
+      `;
+
+      const subSpan = document.createElement("div");
+      subSpan.style.fontWeight = "700";
+      subSpan.style.textAlign = "right";
+      subSpan.textContent = `₱${sub.toFixed(2)}`;
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "btn btn-danger";
+      delBtn.style.padding = "4px 8px";
+      delBtn.textContent = "×";
+      delBtn.onclick = () => {
+        currentDraft.items.splice(idx, 1);
+        currentDraft.was_corrected = true;
+        renderConfirmationCard();
+      };
+
+      row.appendChild(sel);
+      row.appendChild(qtyDiv);
+      row.appendChild(subSpan);
+      row.appendChild(delBtn);
+      listEl.appendChild(row);
+    });
+
+    document.getElementById("confirmTotalDisplay").textContent = `PHP ${grandTotal.toFixed(2)}`;
+  }
+
+  function changeQty(idx, delta) {
+    const next = Math.max(0.25, +(currentDraft.items[idx].quantity + delta).toFixed(2));
+    currentDraft.items[idx].quantity = next;
+    currentDraft.was_corrected = true;
+    renderConfirmationCard();
+  }
+
+  function setQty(idx, val) {
+    const parsed = parseFloat(val);
+    if (!isNaN(parsed) && parsed > 0) {
+      currentDraft.items[idx].quantity = +parsed.toFixed(2);
+      currentDraft.was_corrected = true;
+      renderConfirmationCard();
+    }
+  }
+
+  function addBlankLine() {
+    currentDraft.items.push({ sku_id: priceCatalog[0].sku_id, quantity: 1 });
+    currentDraft.was_corrected = true;
+    renderConfirmationCard();
+  }
+
+  function clearConfirmation() {
+    currentDraft.items = [];
+    document.getElementById("confirmDebtor").value = "";
+    document.getElementById("confirmPhone").value = "";
+    document.getElementById("confirmDue").value = "";
+    document.getElementById("counterSmsBanner").classList.add("hidden");
+    renderConfirmationCard();
+  }
+
+  // ===========================================================================
+  // CONFIRMATION & DIRECT COUNTER SMS WORKFLOW
+  // ===========================================================================
+  function confirmAndCommit() {
+    const debtor = document.getElementById("confirmDebtor").value.trim();
+    const phone = document.getElementById("confirmPhone").value.trim();
+    const due = document.getElementById("confirmDue").value.trim() || "Walang tiyak na petsa";
+
+    if (!debtor || currentDraft.items.length === 0) {
+      showToast("Please confirm customer name and at least one item.");
+      return;
+    }
+
+    let entryTotal = 0;
+    const summaryLines = [];
+    currentDraft.items.forEach(line => {
+      const cat = priceCatalog.find(c => c.sku_id === line.sku_id) || priceCatalog[0];
+      const sub = +(line.quantity * cat.unit_price).toFixed(2);
+      entryTotal += sub;
+      summaryLines.push(`${line.quantity}x ${cat.canonical_name} (PHP ${sub.toFixed(2)})`);
+    });
+
+    let existing = ledgerDebtors.find(d => d.debtor_name.toLowerCase() === debtor.toLowerCase());
+    let newBal = entryTotal;
+
+    if (existing) {
+      existing.running_balance = +(existing.running_balance + entryTotal).toFixed(2);
+      existing.entries += 1;
+      existing.latest_due_raw = due;
+      if (phone) existing.phone = phone;
+      existing.items_log.unshift(...summaryLines);
+      newBal = existing.running_balance;
+    } else {
+      ledgerDebtors.unshift({
+        debtor_id: Date.now(),
+        debtor_name: debtor,
+        phone: phone,
+        entries: 1,
+        latest_due_raw: due,
+        running_balance: +entryTotal.toFixed(2),
+        items_log: summaryLines
+      });
+    }
+
+    saveToStorage();
+
+    // Draft SMS Message for instant counter send
+    const dueClause = due && !due.toLowerCase().includes("walang") ? ` (Bayad sa ${due})` : "";
+    const itemsText = summaryLines.slice(0, 3).join(", ");
+    const smsMessage = `Magandang araw po ${debtor}! Naitala po sa inyong lista sa Tindahan: ${itemsText}. Kabuuang balanse: PHP ${newBal.toFixed(2)}${dueClause}. Maraming salamat po!`;
+
+    lastCommittedTransaction = {
+      debtor: debtor,
+      phone: phone,
+      total: entryTotal,
+      balance: newBal,
+      message: smsMessage
+    };
+
+    // Render Direct Counter SMS Banner
+    document.getElementById("savedDebtorName").textContent = debtor;
+    document.getElementById("savedBalancePill").textContent = `Balanse: PHP ${newBal.toFixed(2)}`;
+    document.getElementById("savedMessagePreview").textContent = smsMessage;
+    document.getElementById("counterSmsBanner").classList.remove("hidden");
+
+    showToast(`Naitala sa lista! (+PHP ${entryTotal.toFixed(2)})`);
+  }
+
+  function sendCounterSmsDirect() {
+    if (!lastCommittedTransaction) return;
+    const phone = lastCommittedTransaction.phone;
+    const msg = lastCommittedTransaction.message;
+
+    if (window.AndroidBridge && window.AndroidBridge.openSmsComposer) {
+      window.AndroidBridge.openSmsComposer(phone, msg);
+    } else {
+      window.location.href = phone ? `sms:${phone}?body=${encodeURIComponent(msg)}` : `sms:?body=${encodeURIComponent(msg)}`;
+    }
+  }
+
+  function shareCounterSmsDirect() {
+    if (!lastCommittedTransaction) return;
+    const msg = lastCommittedTransaction.message;
+    if (window.AndroidBridge && window.AndroidBridge.shareReminder) {
+      window.AndroidBridge.shareReminder(msg);
+    } else if (navigator.share) {
+      navigator.share({ text: msg });
+    } else {
+      copyCounterSmsDirect();
+    }
+  }
+
+  function copyCounterSmsDirect() {
+    if (!lastCommittedTransaction) return;
+    const msg = lastCommittedTransaction.message;
+    if (window.AndroidBridge && window.AndroidBridge.copyToClipboard) {
+      window.AndroidBridge.copyToClipboard(msg);
+    } else {
+      navigator.clipboard.writeText(msg);
+      showToast("Copied to clipboard!");
+    }
+  }
+
+  // ===========================================================================
+  // TAB 2: UTANG LEDGER
+  // ===========================================================================
+  function renderLedgerTable() {
+    const tbody = document.getElementById("ledgerTableBody");
+    tbody.innerHTML = "";
+    document.getElementById("ledgerCountBadge").textContent = `${ledgerDebtors.length} Customers`;
+
+    ledgerDebtors.forEach(d => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${d.debtor_name}</strong><br/><span style="font-size:0.72rem; color:var(--ink-muted);">${d.items_log.slice(0,2).join(", ")}</span></td>
+        <td style="font-size:0.75rem;">${d.phone || "—"}</td>
+        <td>${d.latest_due_raw}</td>
+        <td><strong>PHP ${d.running_balance.toFixed(2)}</strong></td>
+        <td style="display:flex; flex-wrap:wrap; gap:4px;">
+          <button class="btn btn-primary" style="padding:5px 8px; font-size:0.74rem;" onclick="openReminderDraft(${d.debtor_id})">SMS</button>
+          <button class="btn btn-outline" style="padding:5px 8px; font-size:0.74rem;" onclick="markPaid(${d.debtor_id})">Pay</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function openReminderDraft(debtorId) {
+    const d = ledgerDebtors.find(x => x.debtor_id === debtorId);
+    if (!d) return;
+    const dueClause = d.latest_due_raw && !d.latest_due_raw.toLowerCase().includes("walang") ? ` (${d.latest_due_raw})` : "";
+    const msg = `Magandang araw po ${d.debtor_name}! Paalala lang po mula sa Tindahan para sa inyong lista: ${d.items_log.slice(0, 3).join(", ")}. Kabuuang balanse: PHP ${d.running_balance.toFixed(2)}${dueClause}. Maraming salamat po!`;
+    document.getElementById("reminderTextBox").value = msg;
+    document.getElementById("reminderModalCard").classList.remove("hidden");
+    document.getElementById("reminderModalCard").dataset.activeDebtorId = debtorId;
+  }
+
+  function openNativeSmsFromLedger() {
+    const debtorId = parseInt(document.getElementById("reminderModalCard").dataset.activeDebtorId, 10);
+    const d = ledgerDebtors.find(x => x.debtor_id === debtorId);
+    const phone = d && d.phone ? d.phone : "";
+    const msg = document.getElementById("reminderTextBox").value;
+    if (window.AndroidBridge && window.AndroidBridge.openSmsComposer) {
+      window.AndroidBridge.openSmsComposer(phone, msg);
+    } else {
+      window.location.href = phone ? `sms:${phone}?body=${encodeURIComponent(msg)}` : `sms:?body=${encodeURIComponent(msg)}`;
+    }
+  }
+
+  function copyReminderText() {
+    const msg = document.getElementById("reminderTextBox").value;
+    if (window.AndroidBridge && window.AndroidBridge.copyToClipboard) {
+      window.AndroidBridge.copyToClipboard(msg);
+      return;
+    }
+    navigator.clipboard.writeText(msg);
+    showToast("Reminder copied to clipboard!");
+  }
+
+  function shareViaNativeSheet() {
+    const msg = document.getElementById("reminderTextBox").value;
+    if (window.AndroidBridge && window.AndroidBridge.shareReminder) {
+      window.AndroidBridge.shareReminder(msg);
+    } else if (navigator.share) {
+      navigator.share({ text: msg });
+    } else {
+      copyReminderText();
+    }
+  }
+
+  function markPaid(debtorId) {
+    const d = ledgerDebtors.find(x => x.debtor_id === debtorId);
+    if (!d) return;
+    const amt = prompt(`Enter payment amount for ${d.debtor_name} (Balance: PHP ${d.running_balance.toFixed(2)}):`, d.running_balance.toFixed(2));
+    if (!amt) return;
+    const val = parseFloat(amt);
+    if (!isNaN(val) && val > 0) {
+      d.running_balance = Math.max(0, +(d.running_balance - val).toFixed(2));
+      saveToStorage();
+      renderLedgerTable();
+    }
+  }
+
+  // ===========================================================================
+  // TAB 3: PREYSO LIST
+  // ===========================================================================
+  function renderPriceTable() {
+    const tbody = document.getElementById("priceTableBody");
+    tbody.innerHTML = "";
+    priceCatalog.forEach((item, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${item.canonical_name}</strong></td>
+        <td>${item.unit}</td>
+        <td>${item.aliases.join(", ")}</td>
+        <td>
+          <input type="number" step="0.50" value="${item.unit_price.toFixed(2)}" style="width:86px;" onchange="updateUnitPrice(${idx}, this.value)" />
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function updateUnitPrice(idx, val) {
+    const p = parseFloat(val);
+    if (!isNaN(p) && p > 0) {
+      priceCatalog[idx].unit_price = +p.toFixed(2);
+      saveToStorage();
+      renderFallbackButtons();
+      renderConfirmationCard();
+    }
+  }
+
+  function saveNewPriceItem() {
+    const name = document.getElementById("newName").value.trim();
+    const unit = document.getElementById("newUnit").value.trim() || "pc";
+    const price = parseFloat(document.getElementById("newPrice").value);
+    const aliases = document.getElementById("newAliases").value.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+    if (!name || isNaN(price) || price <= 0) {
+      showToast("Enter an item name and valid price > 0.");
+      return;
+    }
+    if (!aliases.includes(name.toLowerCase())) aliases.push(name.toLowerCase());
+    const sku = "SKU-" + name.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+    priceCatalog.unshift({ sku_id: sku, canonical_name: name, unit, unit_price: +price.toFixed(2), aliases });
+    saveToStorage();
+    renderPriceTable();
+    renderFallbackButtons();
+    document.getElementById("newName").value = "";
+    document.getElementById("newPrice").value = "";
+    document.getElementById("newAliases").value = "";
+  }
+
+  // ===========================================================================
+  // NATIVE ANDROID SPEECH RECOGNITION BRIDGE CALLBACK
+  // ===========================================================================
+  window.onAndroidSpeechResult = function(spokenText) {
+    const btn = document.getElementById("pttBtn");
+    btn.classList.remove("recording");
+    document.getElementById("pttLabel").textContent = "Tap to Speak Taglish Utang";
+    if (spokenText) {
+      document.getElementById("utteranceInput").value = spokenText;
+      triggerExtraction(false);
+    }
+  };
+
+  function toggleVoiceCapture() {
+    if (window.AndroidBridge && window.AndroidBridge.startVoiceRecognition) {
+      const btn = document.getElementById("pttBtn");
+      btn.classList.add("recording");
+      document.getElementById("pttLabel").textContent = "Listening (Taglish)...";
+      window.AndroidBridge.startVoiceRecognition();
+      return;
+    }
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) {
+      loadSample(0);
+      return;
+    }
+    const rec = new SpeechRec();
+    rec.lang = "fil-PH";
+    const btn = document.getElementById("pttBtn");
+    btn.classList.add("recording");
+    document.getElementById("pttLabel").textContent = "Listening (Taglish)...";
+    rec.onresult = e => {
+      const transcript = e.results[0][0].transcript;
+      document.getElementById("utteranceInput").value = transcript;
+      triggerExtraction(false);
+    };
+    rec.onend = () => {
+      btn.classList.remove("recording");
+      document.getElementById("pttLabel").textContent = "Tap to Speak Taglish Utang";
+    };
+    rec.start();
+  }
+
+  // ===========================================================================
+  // AI SETTINGS & PRIVACY MODAL CONTROLS
+  // ===========================================================================
+  function openAiModal() {
+    document.getElementById("aiModal").classList.remove("hidden");
+    const radios = document.getElementsByName("aiEngineMode");
+    radios.forEach(r => r.checked = (r.value === aiEngineMode));
+    document.getElementById("geminiKeySection").classList.toggle("hidden", aiEngineMode !== "gemini");
+    document.getElementById("geminiApiKeyInput").value = geminiApiKey;
+  }
+
+  function closeAiModal() {
+    document.getElementById("aiModal").classList.add("hidden");
+  }
+
+  function onAiEngineChanged(val) {
+    aiEngineMode = val;
+    document.getElementById("geminiKeySection").classList.toggle("hidden", val !== "gemini");
+    document.getElementById("headerAiBadge").textContent = val === "gemini" ? "Gemini 2.5 Flash" : "Taglish NLP";
+    saveToStorage();
+  }
+
+  function saveGeminiKey(val) {
+    geminiApiKey = val.trim();
+    saveToStorage();
+  }
+
+  function togglePrivacyModal(show) {
+    document.getElementById("privacyModal").classList.toggle("hidden", !show);
+  }
+
+  // Initialize
+  document.getElementById("headerAiBadge").textContent = aiEngineMode === "gemini" ? "Gemini 2.5 Flash" : "Taglish NLP";
+  renderFallbackButtons();
+  loadSample(0);
+</script>
+</body>
+</html>

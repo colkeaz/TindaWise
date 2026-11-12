@@ -84,6 +84,13 @@ $$\text{Spoken Taglish or 1-Tap Peso/Item} \longrightarrow \text{Entity / Peso E
 ├── requirements.txt                   # Production dependencies (FastAPI, Uvicorn, Pydantic)
 ├── README.md                          # Primary project documentation, research alignment & quickstart
 ├── HANDOFF.md                         # Architecture handoff, interview traceability & defense guide
+├── android/                           # Native Android wrapper & APK build pipeline
+│   ├── app/src/main/                  # AndroidManifest.xml, MainActivity.java (Speech/SMS bridge)
+│   ├── build_apk.py                   # Automated aapt2, javac, d8, zipalign & apksigner build tool
+│   └── tindawise-release.jks          # V1/V2/V3 release keystore
+├── dist/
+│   └── TindaWise-v1.0.0.apk           # Aligned and signed installable Android application
+├── TindaWise-v1.0.0.apk               # Root-level release binary ready for direct sideloading
 ├── data/
 │   ├── eval/
 │   │   ├── sample_manifest.csv        # 36-utterance multi-speaker Taglish benchmark dataset
@@ -139,6 +146,16 @@ uvicorn app:app --app-dir src/backend --reload --port 8000
 Open **`http://localhost:8000`** in your browser to interact with the **Simple Kwaderno Counter UI** (and toggle **Judge / Tech Demo View** in the top header).
 
 Alternatively, you can open `src/frontend/index.html` directly in any browser (`file://`) for standalone offline operation backed by `localStorage`.
+
+### 6. Install or Rebuild the Native Android APK
+The project includes a fully standalone, signed native Android package with on-device speech-to-text, push-to-talk, and native SMS dispatch:
+```powershell
+# Sideload the release APK directly to an Android phone or emulator:
+adb install -r TindaWise-v1.0.0.apk
+
+# Or recompile, package, zipalign, and sign (V2/V3) from source:
+python android/build_apk.py
+```
 
 ---
 

@@ -33,3 +33,6 @@ Desktop.ini
 # Competition docs, proposals & docx generation assets (kept local / handoff archive)
 handoff/
 
+# Android intermediate build artifacts
+android/build/
+
